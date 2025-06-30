@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  api:
+    container_name: zestquiz-api
+    build:
+      context: .
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - "3001:3001"
+    command: npm run start:dev
+    env_file:
+      - .env
+    networks:
+      - zestquiz-network
+    depends_on:
+      - postgres
+
+  postgres:
+    container_name: zestquiz-postgres
+    image: postgres:16
+    networks:
+      - zestquiz-network
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-zestquiz}
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+networks:
+  zestquiz-network:
+
+volumes:
+  postgres: 

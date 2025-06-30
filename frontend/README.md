@@ -1,22 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ZestQuiz Frontend
+
+## Environment Setup
+
+Create a `.env.local` file in the frontend directory with the following variables:
+
+```env
+# Frontend Environment Variables
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_APP_NAME=ZestQuiz
+NEXT_PUBLIC_APP_DESCRIPTION="An AI-powered quiz platform for interactive learning and assessment"
+NEXT_PUBLIC_DEEPSEEK_API_KEY=your_deepseek_api_key_here
+```
 
 ## Getting Started
 
-First, run the development server:
-
+1. Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Run the development server:
+```bash
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Project Structure
+
+- `app/` - Next.js app directory containing pages and layouts
+- `components/` - Reusable React components
+- `hooks/` - Custom React hooks
+- `lib/` - Utility functions and API client
+- `types/` - Type definitions
+- `styles/` - Global styles and Tailwind configuration
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
