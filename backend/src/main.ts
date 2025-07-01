@@ -1,24 +1,27 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
+  logger.log('Starting application...');
+  
   const app = await NestFactory.create(AppModule);
+  logger.log('NestJS application created');
   
   app.enableCors({
     origin: [
       'https://zest-quiz.vercel.app',
-
       'http://localhost:3000',
       'http://localhost:3001',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
   });
+  logger.log('CORS configured');
   
-
   app.setGlobalPrefix('api');
-
+  logger.log('Global prefix set to /api');
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -27,7 +30,10 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
+  logger.log('Global pipes configured');
   
-  await app.listen(process.env.PORT || 8080);
+  const port = process.env.PORT || 8080;
+  await app.listen(port);
+  logger.log(`Application is running on port ${port}`);
 }
 bootstrap();
