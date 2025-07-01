@@ -185,8 +185,21 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       }
     }
 
+    // Prepare the data for submission
+    const submissionData = {
+      ...formData,
+      questions: formData.questions.map((question, index) => ({
+        ...question,
+        orderIndex: index,
+        options: question.options.map((option, optIndex) => ({
+          ...option,
+          orderIndex: optIndex
+        }))
+      }))
+    };
+
     try {
-      await onSubmit(formData);
+      await onSubmit(submissionData);
       setIsDirty(false);
       setError(null);
     } catch (err) {
@@ -246,51 +259,33 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
             name="title"
             value={formData.title}
             onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-lg"
+            className="input-field"
             placeholder="Enter quiz title"
           />
         </div>
-
         <div>
           <label className="block text-sm font-medium mb-1">Description</label>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-lg"
-            rows="3"
+            className="input-field min-h-[100px]"
             placeholder="Enter quiz description"
           />
         </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Status</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border rounded-lg"
-          >
-            <option value="DRAFT">Draft</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-          </select>
-        </div>
-
-        {/* Tags */}
         <div>
           <label className="block text-sm font-medium mb-1">Tags</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {formData.tags.map(tag => (
               <span
                 key={tag}
-                className="bg-secondary/10 px-2 py-1 rounded-lg flex items-center gap-1"
+                className="bg-primary/10 text-primary px-2 py-1 rounded-full text-sm flex items-center gap-1"
               >
                 {tag}
                 <button
                   type="button"
                   onClick={() => removeTag(tag)}
-                  className="text-gray-500 hover:text-red-500"
+                  className="hover:text-red-500"
                 >
                   ×
                 </button>
@@ -302,20 +297,33 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             onKeyPress={handleTagKeyPress}
-            className="w-full px-4 py-2 border rounded-lg"
+            className="input-field"
             placeholder="Type a tag and press Enter"
           />
         </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Status</label>
+          <select
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            className="input-field"
+          >
+            <option value="DRAFT">Draft</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="ARCHIVED">Archived</option>
+          </select>
+        </div>
       </div>
 
-      {/* Questions */}
+      {/* Questions Section */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-medium">Questions</h3>
+          <h2 className="text-xl font-bold">Questions</h2>
           <button
             type="button"
             onClick={addQuestion}
-            className="px-4 py-2 bg-secondary text-black rounded-lg hover:bg-secondary-hover border border-black"
+            className="btn-primary"
           >
             Add Question
           </button>
@@ -327,40 +335,52 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext 
-            items={formData.questions.map(q => q.id)} 
+          <SortableContext
+            items={formData.questions.map(q => q.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-4 w-full overflow-hidden">
+            <div className="space-y-6">
               {formData.questions.map((question, index) => (
                 <SortableQuestion
                   key={question.id}
                   question={question}
                   index={index}
                   onUpdate={(updates) => updateQuestion(question.id, updates)}
-                  onDelete={removeQuestion}
-                  isAnyDragging={activeDragId !== null}
+                  onDelete={() => removeQuestion(question.id)}
                   isDragging={activeDragId === question.id}
+                  isAnyDragging={activeDragId !== null}
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
+
+        {/* Add Question Button at Bottom */}
+        {formData.questions.length > 0 && (
+          <div className="flex justify-center mt-6">
+            <button
+              type="button"
+              onClick={addQuestion}
+              className="btn-primary"
+            >
+              Add Another Question
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Submit Button */}
-      <div className="flex justify-end gap-4">
+      {/* Form Actions */}
+      <div className="flex justify-between items-center pt-6 border-t">
         <button
           type="button"
           onClick={handleExit}
-          className="px-6 py-2 rounded-lg bg-pastleRed hover:bg-pastleRed-hover text-pastleRed-text border border-black"
+          className="btn-white"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-6 py-2 rounded-lg bg-pastleGreen hover:bg-pastleGreen-hover text-pastleGreen-text border border-black"
-          disabled={!isDirty}
+          className="btn-success"
         >
           {isEditing ? 'Save Changes' : 'Create Quiz'}
         </button>

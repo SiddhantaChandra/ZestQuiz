@@ -4,6 +4,7 @@ import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
+import { SubmitQuizDto } from './dto/submit-quiz.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('quizzes')
@@ -21,9 +22,37 @@ export class QuizController {
     return this.quizService.findAll();
   }
 
+  @Get('active')
+  @UseGuards(JwtAuthGuard)
+  findActiveQuizzes(@Request() req) {
+    return this.quizService.findActiveQuizzes(req.user.id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.quizService.findOne(id);
+  }
+
+  @Get(':id/attempt-check')
+  @UseGuards(JwtAuthGuard)
+  checkAttempt(@Param('id') id: string, @Request() req) {
+    return this.quizService.checkAttempt(id, req.user.id);
+  }
+
+  @Post(':id/submit')
+  @UseGuards(JwtAuthGuard)
+  submitQuiz(
+    @Param('id') id: string,
+    @Body() submitQuizDto: SubmitQuizDto,
+    @Request() req,
+  ) {
+    return this.quizService.submitQuiz(id, submitQuizDto, req.user.id);
+  }
+
+  @Get(':id/results')
+  @UseGuards(JwtAuthGuard)
+  getResults(@Param('id') id: string, @Request() req) {
+    return this.quizService.getResults(id, req.user.id);
   }
 
   @Patch(':id')

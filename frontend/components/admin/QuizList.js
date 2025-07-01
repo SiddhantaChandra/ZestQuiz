@@ -1,28 +1,41 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Modal from '@/components/common/Modal';
+import SearchableTags from './SearchableTags';
+import {
+  showQuizDeletedToast,
+  showQuizErrorToast,
+  showStatusUpdateToast,
+  withToastErrorHandler
+} from '@/lib/toast';
 
 export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
   const router = useRouter();
   const [quizzes, setQuizzes] = useState(initialQuizzes);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [selectedTags, setSelectedTags] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState({});
   const [error, setError] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, quizId: null });
   const itemsPerPage = 10;
 
-  // Filter quizzes based on search term and status
+  // Get unique tags from all quizzes
+  const allTags = [...new Set(quizzes.flatMap(quiz => quiz.tags || []))].sort();
+
+  // Filter quizzes based on search term, status and tags
   const filteredQuizzes = quizzes.filter(quiz => {
     const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          quiz.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || quiz.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesTags = selectedTags.length === 0 || 
+                       (quiz.tags && selectedTags.every(tag => quiz.tags.includes(tag)));
+    return matchesSearch && matchesStatus && matchesTags;
   });
 
   // Calculate pagination
@@ -32,18 +45,27 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
     currentPage * itemsPerPage
   );
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, selectedTags]);
+
   // Handle status change
   const handleStatusChange = async (quizId, newStatus) => {
     setLoading(prev => ({ ...prev, [quizId]: true }));
     setError(null);
     
     try {
-      await api.patch(`/quizzes/${quizId}`, { status: newStatus });
+      await withToastErrorHandler(
+        api.patch(`/quizzes/${quizId}`, { status: newStatus }),
+        'Failed to update quiz status'
+      );
       const updatedQuizzes = quizzes.map(quiz =>
         quiz.id === quizId ? { ...quiz, status: newStatus } : quiz
       );
       setQuizzes(updatedQuizzes);
       if (onUpdate) onUpdate();
+      showStatusUpdateToast(newStatus);
     } catch (error) {
       setError(`Failed to update quiz status: ${error.message}`);
       // Revert the select value
@@ -62,10 +84,14 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
     setError(null);
 
     try {
-      await api.delete(`/quizzes/${quizId}`);
+      await withToastErrorHandler(
+        api.delete(`/quizzes/${quizId}`),
+        'Failed to delete quiz'
+      );
       const updatedQuizzes = quizzes.filter(quiz => quiz.id !== quizId);
       setQuizzes(updatedQuizzes);
       if (onUpdate) onUpdate();
+      showQuizDeletedToast();
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;
       setError(`Failed to delete quiz: ${errorMessage}. ${
@@ -109,24 +135,55 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
       />
 
       {/* Search and Filter */}
-      <div className="mb-6 flex gap-4">
-        <input
-          type="text"
-          placeholder="Search quizzes..."
-          className="px-4 py-2 border rounded-lg flex-1"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <select
-          className="px-4 py-2 border rounded-lg"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="ALL">All Status</option>
-          <option value="DRAFT">Draft</option>
-          <option value="ACTIVE">Active</option>
-          <option value="INACTIVE">Inactive</option>
-        </select>
+      <div className="mb-6 space-y-4">
+        <div className="flex gap-4">
+          <input
+            type="text"
+            placeholder="Search quizzes..."
+            className="px-4 py-2 border rounded-lg flex-1"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {allTags.length > 0 && (
+            <div className="w-64">
+              <SearchableTags
+                allTags={allTags}
+                selectedTags={selectedTags}
+                onTagsChange={setSelectedTags}
+              />
+            </div>
+          )}
+          <select
+            className="px-4 py-2 border rounded-lg min-w-[120px]"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="ALL">All Status</option>
+            <option value="DRAFT">Draft</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
+        </div>
+
+        {/* Selected Tags Display */}
+        {selectedTags.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {selectedTags.map(tag => (
+              <span
+                key={tag}
+                className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+              >
+                {tag}
+                <button
+                  onClick={() => setSelectedTags(selectedTags.filter(t => t !== tag))}
+                  className="hover:text-red-600"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Quiz List */}
@@ -137,6 +194,7 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
               <th className="px-6 py-3 text-left">Title</th>
               <th className="px-6 py-3 text-left">Status</th>
               <th className="px-6 py-3 text-left">Questions</th>
+              <th className="px-6 py-3 text-left">Tags</th>
               <th className="px-6 py-3 text-left">Actions</th>
             </tr>
           </thead>
@@ -158,6 +216,18 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
                   </select>
                 </td>
                 <td className="px-6 py-4">{quiz.questions?.length || 0}</td>
+                <td className="px-6 py-4">
+                  <div className="flex flex-wrap gap-1">
+                    {quiz.tags && quiz.tags.map(tag => (
+                      <span
+                        key={tag}
+                        className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-sm"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </td>
                 <td className="px-6 py-4">
                   <div className="flex gap-4">
                     <button

@@ -9,13 +9,13 @@ module.exports = {
     extend: {
       colors: {
         background: '#F2F3F4',
-        primary: {
-          DEFAULT: '#7e80d8',
-          hover: '#6b6ec7'
-        },
-        secondary: {
-          DEFAULT: '#f7d932',
-          hover: '#f5d41e'
+        primary: '#7e80d8',
+        'primary-hover': '#6b6ec7',
+        secondary: '#f7d932',
+        'secondary-hover': '#f5d41e',
+        success: {
+          DEFAULT: '#10B981',
+          hover: '#059669'
         },
         pastleGreen: {
           DEFAULT: '#bce5bc',
@@ -35,8 +35,8 @@ module.exports = {
         text: '#2c2c2c',
       },
       fontFamily: {
-        fredoka: ['var(--font-fredoka)', 'sans-serif'],
-        nunito: ['var(--font-nunito)', 'sans-serif'],
+        fredoka: ['Fredoka', 'sans-serif'],
+        nunito: ['Nunito', 'sans-serif'],
       },
       borderRadius: {
         'custom-sm': '4px',
@@ -52,5 +52,7 @@ module.exports = {
       }
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/line-clamp'),
+  ],
 } 

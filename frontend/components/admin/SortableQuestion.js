@@ -99,7 +99,7 @@ export default function SortableQuestion({ question, index, onUpdate, onDelete, 
             type="text"
             value={question.text}
             onChange={(e) => onUpdate({ text: e.target.value })}
-            className="w-full px-4 py-2 border rounded-lg"
+            className="input-field"
             placeholder="Enter question text"
             disabled={isAnyDragging}
           />
@@ -117,14 +117,14 @@ export default function SortableQuestion({ question, index, onUpdate, onDelete, 
                 type="radio"
                 checked={option.isCorrect}
                 onChange={() => handleOptionChange(optIndex, 'isCorrect', true)}
-                className="w-4 h-4 text-primary flex-shrink-0"
+                className="w-4 h-4 text-primary flex-shrink-0 cursor-pointer"
                 disabled={isAnyDragging}
               />
               <input
                 type="text"
                 value={option.text}
                 onChange={(e) => handleOptionChange(optIndex, 'text', e.target.value)}
-                className="flex-1 px-4 py-2 border rounded-lg min-w-0"
+                className="input-field"
                 placeholder={`Option ${optIndex + 1}`}
                 disabled={isAnyDragging}
               />

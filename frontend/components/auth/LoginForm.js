@@ -2,11 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginForm() {
-  const router = useRouter();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -29,20 +27,11 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/login', formData);
-      const { access_token, user } = response.data;
-      
-      // Login using auth context
-      await login(access_token, user);
-
-      // Let the middleware handle the redirection
-      if (user.role === 'ADMIN') {
-        window.location.href = '/admin/dashboard';
-      } else {
-        window.location.href = '/';
-      }
+      console.log('Attempting login with:', formData.email);
+      await login(formData.email, formData.password);
+      console.log('Login successful');
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error details:', error);
       setError(error.response?.data?.message || 'Invalid email or password');
     } finally {
       setLoading(false);
@@ -95,7 +84,7 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full btn-primary py-2 rounded-lg ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`w-full bg-primary text-white py-2 rounded-lg ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-dark'}`}
         >
           {loading ? (
             <span className="flex items-center justify-center">

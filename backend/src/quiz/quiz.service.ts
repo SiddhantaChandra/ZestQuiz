@@ -321,4 +321,237 @@ export class QuizService {
 
     return this.findOne(quizId);
   }
+
+  async findActiveQuizzes(userId: string) {
+    const quizzes = await this.prisma.quiz.findMany({
+      where: {
+        status: 'ACTIVE',
+      },
+      include: {
+        questions: {
+          include: {
+            options: true,
+          },
+        },
+        attempts: {
+          where: {
+            userId,
+          },
+          select: {
+            score: true,
+          },
+        },
+      },
+    });
+
+    return quizzes.map(quiz => ({
+      ...quiz,
+      userAttempt: quiz.attempts[0],
+      attempts: undefined,
+    }));
+  }
+
+  async checkAttempt(quizId: string, userId: string) {
+    const attempt = await this.prisma.quizAttempt.findFirst({
+      where: {
+        quizId,
+        userId,
+      },
+    });
+
+    return { hasAttempted: !!attempt };
+  }
+
+  async submitQuiz(
+    quizId: string,
+    submitQuizDto: { 
+      answers: { questionId: string; selectedOptionId: string }[];
+      startTime: string;
+      endTime: string;
+    },
+    userId: string,
+  ) {
+    try {
+      // Start a transaction
+      return this.prisma.$transaction(async (prisma) => {
+        // Check if user has already attempted this quiz
+        const existingAttempt = await prisma.quizAttempt.findFirst({
+          where: {
+            quizId,
+            userId,
+          },
+        });
+
+        if (existingAttempt) {
+          throw new BadRequestException('You have already attempted this quiz');
+        }
+
+        // Get quiz with questions and correct answers
+        const quiz = await prisma.quiz.findUnique({
+          where: { id: quizId },
+          include: {
+            questions: {
+              include: {
+                options: true,
+              },
+            },
+          },
+        });
+
+        if (!quiz) {
+          throw new NotFoundException('Quiz not found');
+        }
+
+        // Validate timestamps
+        const startTime = new Date(submitQuizDto.startTime);
+        const endTime = new Date(submitQuizDto.endTime);
+
+        if (isNaN(startTime.getTime())) {
+          throw new BadRequestException('Invalid start time format');
+        }
+
+        if (isNaN(endTime.getTime())) {
+          throw new BadRequestException('Invalid end time format');
+        }
+
+        if (endTime < startTime) {
+          throw new BadRequestException('End time cannot be before start time');
+        }
+
+        // Validate answers
+        if (!submitQuizDto.answers || submitQuizDto.answers.length !== quiz.questions.length) {
+          throw new BadRequestException('Number of answers does not match number of questions');
+        }
+
+        // Calculate score
+        let correctAnswers = 0;
+        const totalQuestions = quiz.questions.length;
+
+        // Create attempt with start and end times
+        const attempt = await prisma.quizAttempt.create({
+          data: {
+            quizId,
+            userId,
+            score: 0, // Will update this after processing answers
+            startedAt: startTime,
+            submittedAt: endTime,
+          },
+        });
+
+        // Process each answer
+        for (const answer of submitQuizDto.answers) {
+          const question = quiz.questions.find(q => q.id === answer.questionId);
+          if (!question) {
+            throw new BadRequestException(`Invalid question ID: ${answer.questionId}`);
+          }
+
+          const selectedOption = question.options.find(o => o.id === answer.selectedOptionId);
+          if (!selectedOption) {
+            throw new BadRequestException(`Invalid option ID for question ${answer.questionId}`);
+          }
+
+          const isCorrect = selectedOption.isCorrect;
+          if (isCorrect) correctAnswers++;
+
+          // Save the answer
+          await prisma.userAnswer.create({
+            data: {
+              questionId: question.id,
+              optionId: selectedOption.id,
+              attemptId: attempt.id,
+              isCorrect,
+              answeredAt: endTime,
+            },
+          });
+        }
+
+        // Update attempt with final score
+        const score = Math.round((correctAnswers / totalQuestions) * 100);
+        await prisma.quizAttempt.update({
+          where: { id: attempt.id },
+          data: { 
+            score,
+          },
+        });
+
+        return { score, correctAnswers, totalQuestions };
+      });
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      console.error('Quiz submission error:', error);
+      throw new BadRequestException('Failed to submit quiz. Please try again.');
+    }
+  }
+
+  async getResults(quizId: string, userId: string) {
+    const attempt = await this.prisma.quizAttempt.findFirst({
+      where: {
+        quizId,
+        userId,
+      },
+      include: {
+        quiz: {
+          include: {
+            questions: {
+              include: {
+                options: true,
+                userAnswers: {
+                  where: {
+                    attempt: {
+                      userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        answers: true,
+      },
+    });
+
+    if (!attempt) {
+      throw new NotFoundException('No attempt found for this quiz');
+    }
+
+    if (!attempt.startedAt || !attempt.submittedAt) {
+      throw new BadRequestException('Invalid attempt timestamps');
+    }
+
+    const questions = attempt.quiz.questions.map(question => {
+      const userAnswer = question.userAnswers[0];
+      return {
+        id: question.id,
+        text: question.text,
+        isCorrect: userAnswer?.isCorrect || false,
+        selectedOptionId: userAnswer?.optionId,
+        options: question.options.map(option => ({
+          id: option.id,
+          text: option.text,
+          isCorrect: option.isCorrect,
+        })),
+      };
+    });
+
+    return {
+      quiz: {
+        id: attempt.quiz.id,
+        title: attempt.quiz.title,
+      },
+      score: attempt.score,
+      correctAnswers: questions.filter(q => q.isCorrect).length,
+      totalQuestions: questions.length,
+      timeTaken: this.calculateTimeTaken(attempt.startedAt, attempt.submittedAt),
+      questions,
+    };
+  }
+
+  private calculateTimeTaken(startedAt: Date, submittedAt: Date): string {
+    const diffInSeconds = Math.floor((submittedAt.getTime() - startedAt.getTime()) / 1000);
+    const minutes = Math.floor(diffInSeconds / 60);
+    const seconds = diffInSeconds % 60;
+    return `${minutes}m ${seconds}s`;
+  }
 } 

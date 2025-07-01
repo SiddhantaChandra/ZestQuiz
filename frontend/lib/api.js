@@ -1,5 +1,4 @@
 import axios from 'axios';
-import Cookies from 'js-cookie';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
@@ -11,7 +10,7 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = Cookies.get('token');
+    const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,8 +28,7 @@ api.interceptors.response.use(
     // Handle unauthorized errors (401)
     if (error.response?.status === 401) {
       // Clear token and user data
-      Cookies.remove('token');
-      Cookies.remove('userRole');
+      localStorage.removeItem('token');
       delete api.defaults.headers.common['Authorization'];
       // Redirect to login page if we're on the client side
       if (typeof window !== 'undefined') {
@@ -40,5 +38,9 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Quiz related API calls
+export const fetchQuizzes = () => api.get('/quizzes');
+export const fetchActiveQuizzes = () => api.get('/quizzes/active');
 
 export { api }; 
