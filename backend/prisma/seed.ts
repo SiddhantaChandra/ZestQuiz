@@ -4,7 +4,6 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Clean up existing data
   await prisma.userAnswer.deleteMany();
   await prisma.quizAttempt.deleteMany();
   await prisma.option.deleteMany();
@@ -12,7 +11,6 @@ async function main() {
   await prisma.quiz.deleteMany();
   await prisma.user.deleteMany();
 
-  // Create admin user
   const adminUser = await prisma.user.create({
     data: {
       email: 'admin@zestquiz.com',
@@ -22,7 +20,6 @@ async function main() {
     },
   });
 
-  // Create regular user
   const regularUser = await prisma.user.create({
     data: {
       email: 'user@zestquiz.com',
@@ -32,7 +29,7 @@ async function main() {
     },
   });
 
-  // Create a sample JavaScript quiz
+
   const jsQuiz = await prisma.quiz.create({
     data: {
       title: 'JavaScript Fundamentals',

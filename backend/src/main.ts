@@ -5,13 +5,21 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Enable CORS
-  app.enableCors();
+  app.enableCors({
+    origin: [
+      'https://zest-quiz.vercel.app',
+
+      'http://localhost:3000',
+      'http://localhost:3001',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true,
+  });
   
-  // Add global prefix
+
   app.setGlobalPrefix('api');
 
-  // Add validation pipe
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

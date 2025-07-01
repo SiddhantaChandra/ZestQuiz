@@ -258,7 +258,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         router.back();
       }
     } catch (error) {
-      console.error('Error submitting quiz:', error);
       showErrorToast(error.message || 'Failed to save quiz');
       setError(error.message || 'Failed to save quiz');
     }
@@ -297,7 +296,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         throw new Error(error.message || 'Failed to generate question');
       }
     } catch (error) {
-      console.error('Error generating question:', error);
       showErrorToast(error.message || 'Failed to generate question');
     } finally {
       setIsGeneratingQuestion(false);

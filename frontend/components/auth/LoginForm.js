@@ -27,12 +27,9 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      console.log('Attempting login with:', formData.email);
       await login(formData.email, formData.password);
-      console.log('Login successful');
     } catch (error) {
-      console.error('Login error details:', error);
-      setError(error.response?.data?.message || 'Invalid email or password');
+      setError(error.message || 'Failed to login');
     } finally {
       setLoading(false);
     }

@@ -188,7 +188,6 @@ export class QuizService {
         });
       });
     } catch (error) {
-      console.error('Quiz update error:', error);
       if (error instanceof NotFoundException) {
         throw error;
       }
@@ -478,11 +477,7 @@ export class QuizService {
         return { score, correctAnswers, totalQuestions };
       });
     } catch (error) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
-        throw error;
-      }
-      console.error('Quiz submission error:', error);
-      throw new BadRequestException('Failed to submit quiz. Please try again.');
+      throw new Error('Failed to submit quiz');
     }
   }
 

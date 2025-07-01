@@ -14,40 +14,18 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
     topic: '',
     numQuestions: 5,
   });
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
 
     try {
-      // Generate questions using AI
-      const { data: aiResponse } = await api.post('/ai/generate-quiz', formData);
-
-      // Transform AI response to quiz data
-      const quizData = {
-        title: aiResponse.title || `Quiz about ${formData.topic}`,
-        description: aiResponse.description,
-        tags: aiResponse.tags,
-        status: 'DRAFT',
-        isAiGenerated: true,
-        questions: aiResponse.quiz.map((q, index) => ({
-          id: generateUniqueId('question'),
-          text: q.question,
-          orderIndex: index,
-          options: q.options.map((opt, optIndex) => ({
-            id: generateUniqueId('option'),
-            text: opt.text,
-            isCorrect: opt.isCorrect,
-            orderIndex: optIndex,
-          })),
-        })),
-      };
-
-      showSuccessToast('Quiz generated successfully!');
-      onQuizGenerated(quizData);
+      const response = await api.post('/api/ai/generate-quiz', formData);
+      onQuizGenerated(response.data);
     } catch (error) {
-      console.error('Error generating quiz:', error);
-      showErrorToast('Failed to generate quiz. Please try again.');
+      setError(error.message || 'Failed to generate quiz');
     } finally {
       setIsLoading(false);
     }

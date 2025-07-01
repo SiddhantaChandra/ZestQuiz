@@ -15,18 +15,22 @@ export async function GET(request) {
       );
     }
 
-    const response = await api.get(`/chat/${attemptId}/history`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/${attemptId}/history`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        'Authorization': `Bearer ${token}`,
+      },
     });
-    
-    return NextResponse.json(response.data);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch chat history');
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching chat history:', error);
     return NextResponse.json(
-      { message: error.response?.data?.message || 'Failed to load chat history' },
-      { status: error.response?.status || 500 }
+      { message: error.message || 'Failed to fetch chat history' },
+      { status: 500 }
     );
   }
 } 

@@ -40,16 +40,11 @@ export function ChatProvider({ children }) {
   }, [chatHistory]);
 
   const toggleChat = () => {
-    console.log('Toggling chat. Current state:', isChatOpen);
-    console.log('Current attempt ID:', currentAttemptId);
-    setIsChatOpen(prev => !prev);
+    setIsChatOpen(!isChatOpen);
   };
 
   const setAttemptContext = (attemptId) => {
-    console.log('Setting attempt context:', attemptId);
     setCurrentAttemptId(attemptId);
-    // Don't automatically set chat state from window state
-    // setIsChatOpen(windowState[attemptId]?.isOpen || false);
   };
 
   const updateChatHistory = (attemptId, messages) => {

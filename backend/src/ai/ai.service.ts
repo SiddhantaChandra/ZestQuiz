@@ -207,12 +207,11 @@ Provide a brief, clear explanation of why the user's answer is incorrect and why
 
       return response.data.choices[0].message.content.trim();
     } catch (error) {
-      console.error('Error generating AI response:', error);
-      return 'I apologize, but I encountered an error while processing your question. Please try asking in a different way or contact support if the issue persists.';
+      throw new Error('Failed to generate AI response');
     }
   }
 
-  private async checkMessageRelevance(message: string, quiz: any): Promise<boolean> {
+  async checkMessageRelevance(message: string, quiz: any): Promise<boolean> {
     try {
       // Create a context string from quiz content
       const quizContent = quiz.questions.map(q => {
@@ -248,9 +247,7 @@ Is this message relevant to the quiz content, asking about the questions, answer
       const result = response.data.choices[0].message.content.trim().toLowerCase();
       return result === 'true';
     } catch (error) {
-      console.error('Error checking message relevance:', error);
-      // If there's an error in checking relevance, default to allowing the message
-      return true;
+      throw new Error('Failed to check message relevance');
     }
   }
 

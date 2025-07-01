@@ -24,10 +24,9 @@ export async function POST(request) {
     
     return NextResponse.json(response.data);
   } catch (error) {
-    console.error('Error sending message:', error);
     return NextResponse.json(
-      { message: error.response?.data?.message || 'Failed to send message' },
-      { status: error.response?.status || 500 }
+      { message: error.message || 'Failed to send message' },
+      { status: 500 }
     );
   }
 } 

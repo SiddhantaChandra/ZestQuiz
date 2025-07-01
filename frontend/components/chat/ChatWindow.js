@@ -16,13 +16,11 @@ export default function ChatWindow({ attemptId }) {
 
   // Debug logging
   useEffect(() => {
-    console.log('ChatWindow mounted');
-    console.log('isChatOpen:', isChatOpen);
-    console.log('attemptId:', attemptId);
+    // Removed console logs
   }, [isChatOpen, attemptId]);
 
   useEffect(() => {
-    console.log('isChatOpen changed:', isChatOpen);
+    // Removed console logs
   }, [isChatOpen]);
 
   // Scroll to bottom of messages
@@ -32,7 +30,6 @@ export default function ChatWindow({ attemptId }) {
 
   useEffect(() => {
     if (isChatOpen && attemptId) {
-      console.log('Loading chat history for attempt:', attemptId);
       const loadChatHistory = async () => {
         try {
           const response = await fetch(`/api/chat/${attemptId}/history`);
@@ -41,15 +38,12 @@ export default function ChatWindow({ attemptId }) {
             throw new Error(error.message || 'Failed to load chat history');
           }
           const data = await response.json();
-          console.log('Chat history loaded:', data);
           setMessages(data);
           updateChatHistory(attemptId, data);
         } catch (error) {
-          console.error('Error loading chat history:', error);
           // Try to load from local cache if API fails
           const cachedMessages = getChatHistory(attemptId);
           if (cachedMessages.length > 0) {
-            console.log('Using cached messages:', cachedMessages);
             setMessages(cachedMessages);
           } else if (!isInitialLoad) {
             // Only show error toast if this isn't the initial load
@@ -59,6 +53,7 @@ export default function ChatWindow({ attemptId }) {
           setIsInitialLoad(false);
         }
       };
+
       loadChatHistory();
     }
   }, [isChatOpen, attemptId, updateChatHistory, getChatHistory, isInitialLoad]);
@@ -70,7 +65,6 @@ export default function ChatWindow({ attemptId }) {
   const handleSendMessage = async (content) => {
     try {
       setIsLoading(true);
-      console.log('Sending message:', content);
       
       // Add user message immediately for better UX
       const userMessage = {
@@ -108,7 +102,6 @@ export default function ChatWindow({ attemptId }) {
       }
       
       const data = await response.json();
-      console.log('Received AI response:', data);
       
       // Remove typing indicator and add AI response
       const finalMessages = [...updatedMessages, {
@@ -120,7 +113,6 @@ export default function ChatWindow({ attemptId }) {
       setMessages(finalMessages);
       updateChatHistory(attemptId, finalMessages);
     } catch (error) {
-      console.error('Error sending message:', error);
       showErrorToast(error.message || 'Failed to send message');
       // Remove the temporary user message and typing indicator on error
       setMessages(messages);
@@ -131,11 +123,9 @@ export default function ChatWindow({ attemptId }) {
   };
 
   if (!isChatOpen) {
-    console.log('ChatWindow not rendering - chat is closed');
     return null;
   }
 
-  console.log('ChatWindow rendering - chat is open');
   return (
     <div className="fixed bottom-24 right-6 w-96 h-[600px] bg-white rounded-lg shadow-xl flex flex-col overflow-hidden">
       {/* Header */}

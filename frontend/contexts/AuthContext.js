@@ -36,19 +36,15 @@ export function AuthProvider({ children }) {
   // Check token and load user data on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          const response = await api.get('/auth/profile');
-          setUser(response.data);
-          console.log('Auth check - User data:', response.data);
-        } catch (error) {
-          console.error('Auth check failed:', error);
-          cleanupAuth(); // Clean up if token is invalid
-        }
+      try {
+        const response = await api.get('/auth/check');
+        const userData = response.data;
+        setUser(userData);
+        return userData;
+      } catch (error) {
+        setUser(null);
+        throw error;
       }
-      setLoading(false);
     };
 
     checkAuth();
@@ -64,34 +60,19 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      // First, make the login request
       const response = await api.post('/auth/login', { email, password });
-      console.log('Login response:', response.data);
-      const { access_token, user: userData } = response.data;
-
-      // Set the token in both localStorage and cookie
-      localStorage.setItem('token', access_token);
-      setCookie('token', access_token);
-      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-
-      // Update the user state
+      const { token, ...userData } = response.data;
+      
+      localStorage.setItem('token', token);
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(userData);
 
-      // Show success toast
-      showLoginSuccessToast(userData.email.split('@')[0]);
-
-      // Redirect based on role
-      console.log('Redirecting user with role:', userData.role);
       if (userData.role === 'ADMIN') {
-        // Use replace instead of push to avoid back button issues
-        router.replace('/admin/dashboard');
+        router.push('/admin/dashboard');
       } else {
-        router.replace('/');
+        router.push('/quizzes');
       }
     } catch (error) {
-      console.error('Login failed:', error);
-      cleanupAuth();
-      showAuthErrorToast(error.response?.data?.message || 'Login failed');
       throw error;
     }
   };
