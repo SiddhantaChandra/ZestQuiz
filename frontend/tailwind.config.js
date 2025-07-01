@@ -17,17 +17,20 @@ module.exports = {
           DEFAULT: '#f7d932',
           hover: '#f5d41e'
         },
-        pastleGreen:{
-          DEFAULT: '#73d673',
-          hover: "#57a357"
+        pastleGreen: {
+          DEFAULT: '#bce5bc',
+          hover: '#a9cea9',
+          text: '#2d7b2d'
         },
-        pastleRed:{
-          DEFAULT: '#f7665f',
-          hover: "#c3504b"
+        pastleRed: {
+          DEFAULT: '#fbd5d5',
+          hover: '#e2c0c0',
+          text: '#9b1c1c'
         },
-        pastleBlue:{
-          DEFAULT: '#9dbaf6',
-          hover: "#7c93c3"
+        pastleBlue: {
+          DEFAULT: '#e1effe',
+          hover: '#bcdefa',
+          text: '#1e429f'
         },
         text: '#2c2c2c',
       },

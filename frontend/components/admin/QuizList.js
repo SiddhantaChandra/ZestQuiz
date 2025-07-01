@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import Modal from '@/components/common/Modal';
 
 export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState({});
   const [error, setError] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, quizId: null });
   const itemsPerPage = 10;
 
   // Filter quizzes based on search term and status
@@ -56,8 +58,6 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
 
   // Handle quiz deletion
   const handleDelete = async (quizId) => {
-    if (!window.confirm('Are you sure you want to delete this quiz? This action cannot be undone and will delete all related questions, options, and attempts.')) return;
-
     setLoading(prev => ({ ...prev, [quizId]: true }));
     setError(null);
 
@@ -96,6 +96,17 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
           {error}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, quizId: null })}
+        onConfirm={() => handleDelete(deleteModal.quizId)}
+        title="Delete Quiz"
+        message="Are you sure you want to delete this quiz? This action cannot be undone and will delete all related questions, options, and attempts."
+        confirmText="Delete Quiz"
+        isDestructive={true}
+      />
 
       {/* Search and Filter */}
       <div className="mb-6 flex gap-4">
@@ -152,21 +163,18 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
                     <button
                       onClick={() => handleEdit(quiz.id)}
                       disabled={loading[quiz.id]}
-                      className={`bg-pastleBlue hover:bg-pastleBlue-hover text-black flex items-center gap-2 px-2 py-1 rounded-md border border-black ${
+                      className={`bg-pastleBlue hover:bg-pastleBlue-hover text-pastleBlue-text flex items-center gap-2 px-2 py-1 min-w-16 justify-center rounded-md border border-black ${
                         loading[quiz.id] ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
-                    >
-                      <Image src="/icons/dashboard/edit-icon.webp" alt="Edit" width={16} height={16} />
-                      Edit
+                    >Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(quiz.id)}
+                      onClick={() => setDeleteModal({ isOpen: true, quizId: quiz.id })}
                       disabled={loading[quiz.id]}
-                      className={`bg-pastleRed hover:bg-pastleRed-hover text-black flex items-center gap-2 px-2 py-1 rounded-md border border-black ${
+                      className={`bg-pastleRed hover:bg-pastleRed-hover text-pastleRed-text flex items-center gap-2 px-2 py-1 min-w-16 justify-center rounded-md border border-black ${
                         loading[quiz.id] ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                     >
-                      <Image src="/icons/dashboard/delete-icon.webp" alt="Delete" width={16} height={16} />
                       Delete
                     </button>
                   </div>

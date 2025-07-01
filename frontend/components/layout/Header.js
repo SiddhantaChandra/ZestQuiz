@@ -42,7 +42,7 @@ export default function Header() {
                   </div>
                   {user.role === 'ADMIN' && (
                     <Link
-                      href="/dashboard"
+                      href="/admin/dashboard"
                       className="px-4 py-2 rounded-custom-md border border-black bg-white hover:bg-background transition-colors font-nunito"
                     >
                       Dashboard

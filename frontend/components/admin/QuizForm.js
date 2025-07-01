@@ -5,8 +5,11 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { api } from '@/lib/api';
 import SortableQuestion from './SortableQuestion';
+import Modal from '@/components/common/Modal';
+import { useRouter } from 'next/navigation';
 
 export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -20,6 +23,8 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   const [error, setError] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
   const [activeDragId, setActiveDragId] = useState(null);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState(null);
 
   // DnD sensors with modified settings for smoother dragging
   const sensors = useSensors(
@@ -90,14 +95,25 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   };
 
   const removeQuestion = (questionId) => {
-    if (!window.confirm('Are you sure you want to remove this question?')) return;
-    
+    setQuestionToDelete(questionId);
+  };
+
+  const handleConfirmQuestionDelete = () => {
     setFormData(prev => ({
       ...prev,
-      questions: prev.questions.filter(q => q.id !== questionId)
+      questions: prev.questions.filter(q => q.id !== questionToDelete)
         .map((q, idx) => ({ ...q, orderIndex: idx }))
     }));
     setIsDirty(true);
+    setQuestionToDelete(null);
+  };
+
+  const handleExit = () => {
+    if (isDirty) {
+      setShowExitModal(true);
+    } else {
+      router.back();
+    }
   };
 
   // Handle drag start
@@ -193,6 +209,28 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Delete Question Modal */}
+      <Modal
+        isOpen={questionToDelete !== null}
+        onClose={() => setQuestionToDelete(null)}
+        onConfirm={handleConfirmQuestionDelete}
+        title="Delete Question"
+        message="Are you sure you want to remove this question? This action cannot be undone."
+        confirmText="Delete Question"
+        isDestructive={true}
+      />
+
+      {/* Exit Confirmation Modal */}
+      <Modal
+        isOpen={showExitModal}
+        onClose={() => setShowExitModal(false)}
+        onConfirm={() => router.back()}
+        title="Unsaved Changes"
+        message="You have unsaved changes. Are you sure you want to leave? All changes will be lost."
+        confirmText="Leave"
+        isDestructive={true}
+      />
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
@@ -314,14 +352,14 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       <div className="flex justify-end gap-4">
         <button
           type="button"
-          onClick={() => window.history.back()}
-          className="px-6 py-2 rounded-lg bg-pastleRed hover:bg-pastleRed-hover border border-black"
+          onClick={handleExit}
+          className="px-6 py-2 rounded-lg bg-pastleRed hover:bg-pastleRed-hover text-pastleRed-text border border-black"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-6 py-2 rounded-lg bg-pastleGreen hover:bg-pastleGreen-hover border border-black"
+          className="px-6 py-2 rounded-lg bg-pastleGreen hover:bg-pastleGreen-hover text-pastleGreen-text border border-black"
           disabled={!isDirty}
         >
           {isEditing ? 'Save Changes' : 'Create Quiz'}
