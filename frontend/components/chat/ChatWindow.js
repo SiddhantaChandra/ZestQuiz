@@ -19,7 +19,7 @@ export default function ChatWindow({ attemptId }) {
     console.log('ChatWindow mounted');
     console.log('isChatOpen:', isChatOpen);
     console.log('attemptId:', attemptId);
-  }, []);
+  }, [isChatOpen, attemptId]);
 
   useEffect(() => {
     console.log('isChatOpen changed:', isChatOpen);
@@ -33,40 +33,39 @@ export default function ChatWindow({ attemptId }) {
   useEffect(() => {
     if (isChatOpen && attemptId) {
       console.log('Loading chat history for attempt:', attemptId);
+      const loadChatHistory = async () => {
+        try {
+          const response = await fetch(`/api/chat/${attemptId}/history`);
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to load chat history');
+          }
+          const data = await response.json();
+          console.log('Chat history loaded:', data);
+          setMessages(data);
+          updateChatHistory(attemptId, data);
+        } catch (error) {
+          console.error('Error loading chat history:', error);
+          // Try to load from local cache if API fails
+          const cachedMessages = getChatHistory(attemptId);
+          if (cachedMessages.length > 0) {
+            console.log('Using cached messages:', cachedMessages);
+            setMessages(cachedMessages);
+          } else if (!isInitialLoad) {
+            // Only show error toast if this isn't the initial load
+            showErrorToast(error.message || 'Failed to load chat history');
+          }
+        } finally {
+          setIsInitialLoad(false);
+        }
+      };
       loadChatHistory();
     }
-  }, [isChatOpen, attemptId]);
+  }, [isChatOpen, attemptId, updateChatHistory, getChatHistory, isInitialLoad]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  const loadChatHistory = async () => {
-    try {
-      const response = await fetch(`/api/chat/${attemptId}/history`);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to load chat history');
-      }
-      const data = await response.json();
-      console.log('Chat history loaded:', data);
-      setMessages(data);
-      updateChatHistory(attemptId, data);
-    } catch (error) {
-      console.error('Error loading chat history:', error);
-      // Try to load from local cache if API fails
-      const cachedMessages = getChatHistory(attemptId);
-      if (cachedMessages.length > 0) {
-        console.log('Using cached messages:', cachedMessages);
-        setMessages(cachedMessages);
-      } else if (!isInitialLoad) {
-        // Only show error toast if this isn't the initial load
-        showErrorToast(error.message || 'Failed to load chat history');
-      }
-    } finally {
-      setIsInitialLoad(false);
-    }
-  };
 
   const handleSendMessage = async (content) => {
     try {

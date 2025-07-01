@@ -10,7 +10,7 @@ export default function ChatButton() {
   useEffect(() => {
     console.log('ChatButton mounted');
     console.log('Initial isChatOpen state:', isChatOpen);
-  }, []);
+  }, [isChatOpen]);
 
   useEffect(() => {
     console.log('ChatButton isChatOpen changed:', isChatOpen);

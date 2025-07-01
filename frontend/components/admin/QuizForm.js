@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { api } from '@/lib/api';
@@ -56,7 +56,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         }))
       }));
     }
-  }, []);
+  }, [formData.questions]);
 
   const handleToggleAi = () => {
     if (isDirty) {
@@ -103,7 +103,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   };
 
   // Handle question operations
-  const addQuestion = () => {
+  const addQuestion = useCallback(() => {
     const newQuestion = {
       id: generateUniqueId('question'),
       text: '',
@@ -121,7 +121,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       questions: [...prev.questions, newQuestion]
     }));
     setIsDirty(true);
-  };
+  }, [formData.questions.length]);
 
   const updateQuestion = (questionId, updates) => {
     setFormData(prev => ({
@@ -248,92 +248,63 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     }
 
     try {
-      // Format the data according to DTO requirements
-      const formattedData = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        tags: formData.tags,
-        status: formData.status || 'DRAFT',
-        isAIGenerated: formData.isAIGenerated || false,
-        questions: formData.questions.map((question, qIndex) => ({
-          text: question.text.trim(),
-          orderIndex: qIndex,
-          options: question.options.map((option, oIndex) => ({
-            text: option.text.trim(),
-            isCorrect: option.isCorrect,
-            orderIndex: oIndex
-          }))
-        }))
-      };
-
-      await onSubmit(formattedData);
-      if (isEditing) {
-        showQuizUpdatedToast();
-      } else {
-        showQuizCreatedToast();
+      const response = await onSubmit(formData);
+      if (response.success) {
+        if (isEditing) {
+          showQuizUpdatedToast();
+        } else {
+          showQuizCreatedToast();
+        }
+        router.back();
       }
     } catch (error) {
-      console.error('Quiz submission error:', error.response?.data || error);
-      showErrorToast(error.response?.data?.message || error.message || 'Failed to save quiz. Please try again.');
+      console.error('Error submitting quiz:', error);
+      showErrorToast(error.message || 'Failed to save quiz');
+      setError(error.message || 'Failed to save quiz');
     }
   };
 
   const generateAiQuestion = async () => {
-    if (!formData.title.trim()) {
-      setError('Please enter a quiz title/topic to generate a question');
-      return;
-    }
-
-    setIsGeneratingQuestion(true);
-    setError(null);
-
     try {
-      const response = await api.post('/ai/generate-question', {
-        topic: formData.title,
-        existingQuestions: formData.questions
+      setIsGeneratingQuestion(true);
+      const response = await api.post('/api/ai/generate-question', {
+        title: formData.title,
+        description: formData.description,
+        existingQuestions: formData.questions.map(q => q.text),
       });
 
-      // Add detailed console logging
-      console.log('AI Question Generation Response:', {
-        fullResponse: response,
-        questionData: response.data,
-        question: response.data.question
-      });
-
-      // Structure the new question with the correct text field
-      const newQuestion = {
-        id: `temp_${Date.now()}`,
-        text: response.data.question.question, // Access the question text correctly
-        orderIndex: formData.questions.length,
-        options: response.data.question.options.map((opt, i) => ({
-          ...opt,
-          id: `temp_opt_${Date.now()}_${i}`,
-          orderIndex: i
-        }))
-      };
-
-      console.log('Processed New Question:', newQuestion);
-
-      setFormData(prev => {
-        const updatedQuestions = [...prev.questions, newQuestion].map((q, idx) => ({
-          ...q,
-          orderIndex: idx
-        }));
-        return {
-          ...prev,
-          questions: updatedQuestions
+      if (response.ok) {
+        const data = await response.json();
+        const newQuestion = {
+          id: generateUniqueId('question'),
+          text: data.question,
+          orderIndex: formData.questions.length,
+          options: data.options.map((optionText, i) => ({
+            id: generateUniqueId('option'),
+            text: optionText,
+            isCorrect: i === data.correctOptionIndex,
+            orderIndex: i
+          }))
         };
-      });
-      setIsDirty(true);
-    } catch (err) {
-      console.error('AI Question Generation Error:', err);
-      setError(err.message || 'Failed to generate question');
+
+        setFormData(prev => ({
+          ...prev,
+          questions: [...prev.questions, newQuestion]
+        }));
+        setIsDirty(true);
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to generate question');
+      }
+    } catch (error) {
+      console.error('Error generating question:', error);
+      showErrorToast(error.message || 'Failed to generate question');
     } finally {
       setIsGeneratingQuestion(false);
     }
   };
 
-  // Warn about unsaved changes
+  // Add beforeunload event listener
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (isDirty) {
@@ -346,12 +317,12 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty]);
 
-  // Add a blank question by default when in manual mode
+  // Add question if none exist and not in AI mode
   useEffect(() => {
     if (!isAiMode && formData.questions.length === 0) {
       addQuestion();
     }
-  }, [isAiMode]);
+  }, [isAiMode, addQuestion, formData.questions.length]);
 
   return (
     <div className="space-y-6">
@@ -556,4 +527,4 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       )}
     </div>
   );
-} 
+}
