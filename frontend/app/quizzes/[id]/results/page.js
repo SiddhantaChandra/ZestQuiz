@@ -5,20 +5,34 @@ import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { showErrorToast } from '@/lib/toast';
 import { ArrowLeft } from 'lucide-react';
-import ExplanationButton from '@/components/quiz/ExplanationButton';
+import ChatButton from '@/components/chat/ChatButton';
+import ChatWindow from '@/components/chat/ChatWindow';
+import { useChat } from '@/contexts/ChatContext';
 
 export default function QuizResults() {
   const params = useParams();
   const router = useRouter();
+  const { setAttemptContext } = useChat();
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [attemptId, setAttemptId] = useState(null);
 
   useEffect(() => {
     const fetchResults = async () => {
       if (!params?.id) return;
       
       try {
+        // First, get the latest attempt ID for this quiz
+        const attemptsResponse = await api.get(`/quizzes/${params.id}/attempts`);
+        const latestAttempt = attemptsResponse.data;
+        if (!latestAttempt) {
+          throw new Error('No attempt found for this quiz');
+        }
+        setAttemptId(latestAttempt.id);
+        setAttemptContext(latestAttempt.id);
+
+        // Then get the results
         const response = await api.get(`/quizzes/${params.id}/results`);
         setResults(response.data);
         setError(null);
@@ -32,7 +46,7 @@ export default function QuizResults() {
     };
 
     fetchResults();
-  }, [params?.id]);
+  }, [params?.id, setAttemptContext]);
 
   if (loading) {
     return (
@@ -52,94 +66,74 @@ export default function QuizResults() {
     );
   }
 
-  if (!results) return null;
+  if (!results || !attemptId) return null;
 
   return (
-    <div className="min-h-screen bg-primary">
-      {/* Header */}
-      <div className="max-w-4xl mx-auto px-6 py-4">
-        <div className="flex items-center gap-4 mb-8">
-          <button 
-            onClick={() => router.push('/')}
-            className="p-2 text-white hover:bg-primary-hover rounded-full transition-colors"
-          >
-            <ArrowLeft size={24} />
-          </button>
-          <h1 className="text-2xl font-semibold text-white">{results.quiz.title}</h1>
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <button
+        onClick={() => router.push('/quizzes')}
+        className="flex items-center text-purple-600 hover:text-purple-700 mb-6"
+      >
+        <ArrowLeft className="w-5 h-5 mr-2" />
+        Back to Quizzes
+      </button>
 
-        {/* Results Summary */}
-        <div className="bg-background rounded-lg p-6 mb-8 shadow-lg">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-4xl font-bold text-primary mb-2">{results.score}%</p>
-              <p className="text-sm text-text/70">Score</p>
-            </div>
-            <div>
-              <p className="text-4xl font-bold text-primary mb-2">{results.correctAnswers}/{results.totalQuestions}</p>
-              <p className="text-sm text-text/70">Correct Answers</p>
-            </div>
-            <div>
-              <p className="text-4xl font-bold text-primary mb-2">{results.timeTaken}</p>
-              <p className="text-sm text-text/70">Time Taken</p>
-            </div>
+      <h1 className="text-3xl font-bold mb-6">{results.quiz.title}</h1>
+      
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Your Results</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+          <div>
+            <p className="text-4xl font-bold text-purple-600 mb-2">{results.score}%</p>
+            <p className="text-gray-600">Score</p>
+          </div>
+          <div>
+            <p className="text-4xl font-bold text-purple-600 mb-2">
+              {results.correctAnswers}/{results.totalQuestions}
+            </p>
+            <p className="text-gray-600">Correct Answers</p>
+          </div>
+          <div>
+            <p className="text-4xl font-bold text-purple-600 mb-2">{results.timeTaken}</p>
+            <p className="text-gray-600">Time Taken</p>
           </div>
         </div>
-
-        {/* Questions Review */}
-        <div className="space-y-6">
-          {results.questions.map((question, index) => (
-            <div key={question.id} className="bg-background rounded-lg p-6 shadow-lg">
-              <h3 className="text-xl font-semibold mb-4 text-text">
-                Question {index + 1} of {results.totalQuestions}
-              </h3>
-              <p className="mb-6 text-text">{question.text}</p>
-              <div className="space-y-3">
-                {question.options.map(option => (
-                  <div
-                    key={option.id}
-                    className={`p-4 rounded-lg transition-colors ${
-                      option.id === question.selectedOptionId
-                        ? option.isCorrect
-                          ? 'bg-green-100 border-green-200 text-green-800'
-                          : 'bg-red-100 border-red-200 text-red-800'
-                        : option.isCorrect
-                        ? 'bg-green-50 border-green-100 text-green-800'
-                        : 'bg-white text-text'
-                    } border`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span>{option.text}</span>
-                      {option.id === question.selectedOptionId && (
-                        <span className={option.isCorrect ? 'text-green-600' : 'text-red-600'}>
-                          {option.isCorrect ? '✓' : '✗'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {question.selectedOptionId && !question.options.find(opt => opt.id === question.selectedOptionId)?.isCorrect && (
-                  <ExplanationButton
-                    question={question.text}
-                    correctAnswer={question.options.find(opt => opt.isCorrect)?.text}
-                    userAnswer={question.options.find(opt => opt.id === question.selectedOptionId)?.text}
-                  />
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Back Button */}
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={() => router.push('/')}
-            className="px-6 py-2 bg-secondary text-text rounded-lg hover:bg-secondary-hover transition-colors"
-          >
-            Back to Quizzes
-          </button>
-        </div>
       </div>
+
+      <div className="space-y-6">
+        {results.questions.map((question, index) => (
+          <div key={question.id} className="bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-xl font-semibold mb-4">
+              Question {index + 1}: {question.text}
+            </h3>
+            <div className="space-y-2">
+              {question.options.map(option => (
+                <div
+                  key={option.id}
+                  className={`p-3 rounded-lg ${
+                    option.isCorrect
+                      ? 'bg-green-100 text-green-800'
+                      : option.id === question.selectedOptionId && !option.isCorrect
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
+                  {option.text}
+                  {option.isCorrect && (
+                    <span className="ml-2 text-green-600">(Correct Answer)</span>
+                  )}
+                  {option.id === question.selectedOptionId && !option.isCorrect && (
+                    <span className="ml-2 text-red-600">(Your Answer)</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <ChatButton />
+      <ChatWindow attemptId={attemptId} />
     </div>
   );
 } 

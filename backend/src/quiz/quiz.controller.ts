@@ -33,6 +33,12 @@ export class QuizController {
     return this.quizService.findOne(id);
   }
 
+  @Get(':id/attempts')
+  @UseGuards(JwtAuthGuard)
+  getLatestAttempt(@Param('id') id: string, @Request() req) {
+    return this.quizService.getLatestAttempt(id, req.user.id);
+  }
+
   @Get(':id/attempt-check')
   @UseGuards(JwtAuthGuard)
   checkAttempt(@Param('id') id: string, @Request() req) {

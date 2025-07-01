@@ -1,7 +1,7 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
-import { QuizQuestion, AIQuizResponse } from './types';
+import { QuizQuestion, AIQuizResponse, QuizContext } from './types';
 
 interface DeepSeekResponse {
   choices: Array<{
@@ -12,15 +12,14 @@ interface DeepSeekResponse {
 }
 
 const VALID_CATEGORIES = [
-  'Technology',
-  'Science',
-  'History',
-  'Geography',
-  'Literature',
-  'Arts',
-  'Sports',
+  'Art & Literature',
   'Entertainment',
-  'General Knowledge'
+  'Geography',
+  'History',
+  'Languages',
+  'Science',
+  'Sports',
+  'Trivia'
 ];
 
 @Injectable()
@@ -32,8 +31,7 @@ export class AiService {
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.get<string>('DEEPSEEK_API_KEY');
     if (!apiKey) {
-      this.logger.error('DEEPSEEK_API_KEY is not set in environment variables');
-      throw new Error('DEEPSEEK_API_KEY is required');
+      throw new Error('DEEPSEEK_API_KEY is not defined in environment variables');
     }
     this.apiKey = apiKey;
     this.apiEndpoint = 'https://api.deepseek.com/v1/chat/completions';
@@ -162,6 +160,100 @@ Provide a brief, clear explanation of why the user's answer is incorrect and why
     }
   }
 
+  async generateResponse(message: string, context: QuizContext): Promise<string> {
+    try {
+      const { quiz, userAnswers, score, question } = context;
+      
+      // Check if the message is relevant to the quiz
+      const isRelevant = await this.checkMessageRelevance(message, quiz);
+      if (!isRelevant) {
+        return "I notice your question might not be directly related to the quiz. To help you better, please ask questions about the quiz content, your answers, or specific concepts covered in the questions. Feel free to ask about any question from the quiz or concepts you'd like me to explain further.";
+      }
+
+      // Build context-aware prompt
+      let prompt = `As a helpful AI tutor, I'm here to assist with your quiz questions. `;
+      
+      if (question) {
+        const questionData = quiz.questions[question - 1];
+        const userAnswer = userAnswers.find(a => a.questionId === questionData.id);
+        const correctOption = questionData.options.find(o => o.isCorrect);
+        
+        if (questionData && userAnswer && correctOption) {
+          prompt += `Regarding Question ${question}: "${questionData.text}"\n`;
+          prompt += `You selected: "${userAnswer.selectedOption.text}"\n`;
+          prompt += `The correct answer was: "${correctOption.text}"\n`;
+        }
+      }
+      
+      prompt += `Your overall score was ${score}%.\n\n`;
+      prompt += `User question: ${message}\n`;
+      prompt += `Please provide a helpful, encouraging response that explains the concept and helps the user understand ${question ? 'this question' : 'the quiz material'} better.`;
+
+      const response = await axios.post<DeepSeekResponse>(
+        this.apiEndpoint,
+        {
+          model: 'deepseek-chat',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 1000,
+          temperature: 0.7,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return response.data.choices[0].message.content.trim();
+    } catch (error) {
+      console.error('Error generating AI response:', error);
+      return 'I apologize, but I encountered an error while processing your question. Please try asking in a different way or contact support if the issue persists.';
+    }
+  }
+
+  private async checkMessageRelevance(message: string, quiz: any): Promise<boolean> {
+    try {
+      // Create a context string from quiz content
+      const quizContent = quiz.questions.map(q => {
+        const questionText = q.text;
+        const options = q.options.map(o => o.text).join(' ');
+        return `${questionText} ${options}`;
+      }).join(' ');
+
+      const prompt = `Given the following quiz content and user message, determine if the message is relevant to the quiz. Respond with only "true" or "false".
+
+Quiz content: ${quizContent}
+
+User message: ${message}
+
+Is this message relevant to the quiz content, asking about the questions, answers, or directly related concepts?`;
+
+      const response = await axios.post<DeepSeekResponse>(
+        this.apiEndpoint,
+        {
+          model: 'deepseek-chat',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 10,
+          temperature: 0.1,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const result = response.data.choices[0].message.content.trim().toLowerCase();
+      return result === 'true';
+    } catch (error) {
+      console.error('Error checking message relevance:', error);
+      // If there's an error in checking relevance, default to allowing the message
+      return true;
+    }
+  }
+
   private generateQuizPrompt(topic: string, numQuestions: number): string {
     return `Generate a quiz with ${numQuestions} multiple choice questions about ${topic}.
 
@@ -179,13 +271,13 @@ Format: JSON object with this structure:
     }
   ],
   "description": "A brief description of the quiz content and learning objectives",
-  "tags": ["Category", "Topic", "Subtopic"]  // First tag must be a valid category
+  "tags": ["Category", "Topic", "Subtopic", "Additional Tag"]  // Exactly 4 tags, first must be a valid category
 }
 
 Requirements:
 - First tag MUST be one of these categories: ${VALID_CATEGORIES.join(', ')}
 - Description should be 2-3 sentences explaining the quiz content and learning objectives
-- Include 3-5 relevant tags (first being the category)
+- Include EXACTLY 4 tags (first being the category)
 - Exactly one correct answer per question
 - 4 options per question
 - Clear, unambiguous questions
@@ -221,8 +313,8 @@ Requirements:
     if (!quizResponse.description || typeof quizResponse.description !== 'string') {
       throw new Error('Quiz must have a description');
     }
-    if (!quizResponse.tags || !Array.isArray(quizResponse.tags) || quizResponse.tags.length < 1) {
-      throw new Error('Quiz must have at least one tag');
+    if (!quizResponse.tags || !Array.isArray(quizResponse.tags) || quizResponse.tags.length !== 4) {
+      throw new Error('Quiz must have exactly 4 tags');
     }
 
     // Validate category

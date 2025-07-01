@@ -67,7 +67,7 @@ export default function Home() {
 
       {/* Category Navigation */}
       <div className="flex space-x-4 mb-8 overflow-x-auto pb-2">
-        {['All', 'Mathematics', 'Science', 'History', 'Geography', 'Technology'].map((category) => (
+        {['All', 'Art & Literature', 'Entertainment', 'Geography', 'History', 'Languages', 'Science', 'Sports', 'Trivia'].map((category) => (
           <button
             key={category}
             className={`btn whitespace-nowrap ${

@@ -49,10 +49,16 @@ module.exports = {
       boxShadow: {
         'custom': '0 2px 4px rgba(0, 0, 0, 0.1)',
         'custom-hover': '0 4px 6px rgba(0, 0, 0, 0.15)',
-      }
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic':
+          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      },
     },
   },
   plugins: [
     require('@tailwindcss/line-clamp'),
+    require('@tailwindcss/typography'),
   ],
 } 

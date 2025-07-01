@@ -35,4 +35,38 @@ export interface GenerateQuestionRequest {
 
 export interface GenerateQuestionResponse {
   question: QuizQuestion;
+}
+
+export interface QuizContext {
+  quiz: {
+    id: string;
+    title: string;
+    description: string;
+    questions: Array<{
+      id: string;
+      text: string;
+      orderIndex: number;
+      options: Array<{
+        id: string;
+        text: string;
+        isCorrect: boolean;
+        orderIndex: number;
+      }>;
+    }>;
+  };
+  userAnswers: Array<{
+    id: string;
+    questionId: string;
+    question: {
+      id: string;
+      text: string;
+    };
+    selectedOption: {
+      id: string;
+      text: string;
+      isCorrect: boolean;
+    };
+  }>;
+  score: number;
+  question: number | null;
 } 

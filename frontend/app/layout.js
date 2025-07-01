@@ -1,6 +1,8 @@
 import { Fredoka, Nunito } from 'next/font/google';
 import './globals.css';
 import LayoutWrapper from '@/components/layout/LayoutWrapper';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ChatProvider } from '@/contexts/ChatContext';
 
 const fredoka = Fredoka({
   subsets: ['latin'],
@@ -33,9 +35,13 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body className="min-h-screen bg-background font-fredoka text-text">
-        <LayoutWrapper>
-          {children}
-        </LayoutWrapper>
+        <AuthProvider>
+          <ChatProvider>
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+          </ChatProvider>
+        </AuthProvider>
       </body>
     </html>
   );

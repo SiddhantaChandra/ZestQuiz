@@ -216,12 +216,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         showWarningToast(`Question ${i + 1} needs a correct answer selected`);
         return false;
       }
-
-      // Check explanation
-      if (!question.explanation.trim()) {
-        showWarningToast(`Question ${i + 1} is missing an explanation`);
-        return false;
-      }
     }
 
     return true;
@@ -419,12 +413,12 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
                   {formData.questions.map((question, index) => (
                     <div key={question.id} className="space-y-4">
                       <SortableQuestion
-                        key={question.id}
                         question={question}
                         questionNumber={index + 1}
                         onUpdate={(updates) => updateQuestion(question.id, updates)}
                         onDelete={() => removeQuestion(question.id)}
                         isDragging={activeDragId === question.id}
+                        isAnyDragging={activeDragId !== null}
                       />
                       
                       {/* Show action buttons only after the last question */}
