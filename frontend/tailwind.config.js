@@ -17,6 +17,18 @@ module.exports = {
           DEFAULT: '#f7d932',
           hover: '#f5d41e'
         },
+        pastleGreen:{
+          DEFAULT: '#73d673',
+          hover: "#57a357"
+        },
+        pastleRed:{
+          DEFAULT: '#f7665f',
+          hover: "#c3504b"
+        },
+        pastleBlue:{
+          DEFAULT: '#9dbaf6',
+          hover: "#7c93c3"
+        },
         text: '#2c2c2c',
       },
       fontFamily: {

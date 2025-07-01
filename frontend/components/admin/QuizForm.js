@@ -19,11 +19,13 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   const [tagInput, setTagInput] = useState('');
   const [error, setError] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [activeDragId, setActiveDragId] = useState(null);
 
-  // DnD sensors
+  // DnD sensors with modified settings for smoother dragging
   const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor)
+    useSensor(PointerSensor, {
+      activationConstraint: null
+    })
   );
 
   // Handle form field changes
@@ -98,10 +100,22 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     setIsDirty(true);
   };
 
-  // Handle question reordering
+  // Handle drag start
+  const handleDragStart = (event) => {
+    const { active } = event;
+    setActiveDragId(active.id);
+    // Prevent horizontal scrolling during drag
+    document.body.style.overflowX = 'hidden';
+  };
+
+  // Handle drag end
   const handleDragEnd = (event) => {
     const { active, over } = event;
-    if (active.id !== over.id) {
+    setActiveDragId(null);
+    // Restore scrolling
+    document.body.style.overflowX = '';
+    
+    if (active && over && active.id !== over.id) {
       setFormData(prev => {
         const oldIndex = prev.questions.findIndex(q => q.id === active.id);
         const newIndex = prev.questions.findIndex(q => q.id === over.id);
@@ -259,11 +273,11 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       {/* Questions */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Questions</h3>
+          <h3 className="text-lg font-medium">Questions</h3>
           <button
             type="button"
             onClick={addQuestion}
-            className="btn-secondary px-4 py-2 rounded-lg"
+            className="px-4 py-2 bg-secondary text-black rounded-lg hover:bg-secondary-hover border border-black"
           >
             Add Question
           </button>
@@ -272,20 +286,23 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext
-            items={formData.questions.map(q => q.id)}
+          <SortableContext 
+            items={formData.questions.map(q => q.id)} 
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-4">
+            <div className="space-y-4 w-full overflow-hidden">
               {formData.questions.map((question, index) => (
                 <SortableQuestion
                   key={question.id}
                   question={question}
                   index={index}
                   onUpdate={(updates) => updateQuestion(question.id, updates)}
-                  onDelete={() => removeQuestion(question.id)}
+                  onDelete={removeQuestion}
+                  isAnyDragging={activeDragId !== null}
+                  isDragging={activeDragId === question.id}
                 />
               ))}
             </div>
@@ -298,13 +315,13 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         <button
           type="button"
           onClick={() => window.history.back()}
-          className="btn-secondary px-6 py-2 rounded-lg"
+          className="px-6 py-2 rounded-lg bg-pastleRed hover:bg-pastleRed-hover border border-black"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="btn-primary px-6 py-2 rounded-lg"
+          className="px-6 py-2 rounded-lg bg-pastleGreen hover:bg-pastleGreen-hover border border-black"
           disabled={!isDirty}
         >
           {isEditing ? 'Save Changes' : 'Create Quiz'}

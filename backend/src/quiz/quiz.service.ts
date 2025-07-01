@@ -148,11 +148,73 @@ export class QuizService {
 
   async remove(id: string) {
     try {
-      return await this.prisma.quiz.delete({
+      // First check if the quiz exists
+      const quiz = await this.prisma.quiz.findUnique({
         where: { id },
+        include: {
+          questions: {
+            include: {
+              options: true,
+              userAnswers: true
+            }
+          },
+          attempts: {
+            include: {
+              answers: true
+            }
+          }
+        }
+      });
+
+      if (!quiz) {
+        throw new NotFoundException(`Quiz with ID ${id} not found`);
+      }
+
+      // Use a transaction to handle all the cascading deletes
+      return await this.prisma.$transaction(async (prisma) => {
+        // Delete all user answers first
+        for (const question of quiz.questions) {
+          if (question.userAnswers.length > 0) {
+            await prisma.userAnswer.deleteMany({
+              where: { questionId: question.id }
+            });
+          }
+        }
+
+        // Delete all quiz attempts and their answers
+        if (quiz.attempts.length > 0) {
+          for (const attempt of quiz.attempts) {
+            await prisma.userAnswer.deleteMany({
+              where: { attemptId: attempt.id }
+            });
+          }
+          await prisma.quizAttempt.deleteMany({
+            where: { quizId: id }
+          });
+        }
+
+        // Delete all options for each question
+        for (const question of quiz.questions) {
+          await prisma.option.deleteMany({
+            where: { questionId: question.id }
+          });
+        }
+
+        // Delete all questions
+        await prisma.question.deleteMany({
+          where: { quizId: id }
+        });
+
+        // Finally delete the quiz
+        return prisma.quiz.delete({
+          where: { id }
+        });
       });
     } catch (error) {
-      throw new NotFoundException(`Quiz with ID ${id} not found`);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(`Failed to delete quiz: ${error.message}`);
     }
   }
 

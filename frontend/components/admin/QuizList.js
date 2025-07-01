@@ -2,12 +2,17 @@
 
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
+  const router = useRouter();
   const [quizzes, setQuizzes] = useState(initialQuizzes);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState({});
+  const [error, setError] = useState(null);
   const itemsPerPage = 10;
 
   // Filter quizzes based on search term and status
@@ -27,6 +32,9 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
 
   // Handle status change
   const handleStatusChange = async (quizId, newStatus) => {
+    setLoading(prev => ({ ...prev, [quizId]: true }));
+    setError(null);
+    
     try {
       await api.patch(`/quizzes/${quizId}`, { status: newStatus });
       const updatedQuizzes = quizzes.map(quiz =>
@@ -35,13 +43,23 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
       setQuizzes(updatedQuizzes);
       if (onUpdate) onUpdate();
     } catch (error) {
-      console.error('Failed to update quiz status:', error);
+      setError(`Failed to update quiz status: ${error.message}`);
+      // Revert the select value
+      const select = document.querySelector(`select[data-quiz-id="${quizId}"]`);
+      if (select) {
+        select.value = quizzes.find(q => q.id === quizId)?.status || 'DRAFT';
+      }
+    } finally {
+      setLoading(prev => ({ ...prev, [quizId]: false }));
     }
   };
 
   // Handle quiz deletion
   const handleDelete = async (quizId) => {
-    if (!window.confirm('Are you sure you want to delete this quiz?')) return;
+    if (!window.confirm('Are you sure you want to delete this quiz? This action cannot be undone and will delete all related questions, options, and attempts.')) return;
+
+    setLoading(prev => ({ ...prev, [quizId]: true }));
+    setError(null);
 
     try {
       await api.delete(`/quizzes/${quizId}`);
@@ -49,8 +67,20 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
       setQuizzes(updatedQuizzes);
       if (onUpdate) onUpdate();
     } catch (error) {
-      console.error('Failed to delete quiz:', error);
+      const errorMessage = error.response?.data?.message || error.message;
+      setError(`Failed to delete quiz: ${errorMessage}. ${
+        error.response?.status === 404 
+          ? 'The quiz may have already been deleted.'
+          : 'Please try again or contact support if the problem persists.'
+      }`);
+    } finally {
+      setLoading(prev => ({ ...prev, [quizId]: false }));
     }
+  };
+
+  // Handle edit
+  const handleEdit = (quizId) => {
+    router.push(`/admin/quizzes/${quizId}/edit`);
   };
 
   const statusColors = {
@@ -61,6 +91,12 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
 
   return (
     <div>
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          {error}
+        </div>
+      )}
+
       {/* Search and Filter */}
       <div className="mb-6 flex gap-4">
         <input
@@ -99,9 +135,11 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
                 <td className="px-6 py-4">{quiz.title}</td>
                 <td className="px-6 py-4">
                   <select
-                    className={`px-2 py-1 rounded ${statusColors[quiz.status]}`}
+                    data-quiz-id={quiz.id}
+                    className={`px-2 py-1 rounded ${statusColors[quiz.status]} ${loading[quiz.id] ? 'opacity-50 cursor-not-allowed' : ''}`}
                     value={quiz.status}
                     onChange={(e) => handleStatusChange(quiz.id, e.target.value)}
+                    disabled={loading[quiz.id]}
                   >
                     <option value="DRAFT">Draft</option>
                     <option value="ACTIVE">Active</option>
@@ -110,17 +148,25 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
                 </td>
                 <td className="px-6 py-4">{quiz.questions?.length || 0}</td>
                 <td className="px-6 py-4">
-                  <div className="flex gap-2">
-                    <a
-                      href={`/admin/quizzes/${quiz.id}/edit`}
-                      className="text-blue-600 hover:text-blue-800"
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => handleEdit(quiz.id)}
+                      disabled={loading[quiz.id]}
+                      className={`bg-pastleBlue hover:bg-pastleBlue-hover text-black flex items-center gap-2 px-2 py-1 rounded-md border border-black ${
+                        loading[quiz.id] ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
                     >
+                      <Image src="/icons/dashboard/edit-icon.webp" alt="Edit" width={16} height={16} />
                       Edit
-                    </a>
+                    </button>
                     <button
                       onClick={() => handleDelete(quiz.id)}
-                      className="text-red-600 hover:text-red-800"
+                      disabled={loading[quiz.id]}
+                      className={`bg-pastleRed hover:bg-pastleRed-hover text-black flex items-center gap-2 px-2 py-1 rounded-md border border-black ${
+                        loading[quiz.id] ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
                     >
+                      <Image src="/icons/dashboard/delete-icon.webp" alt="Delete" width={16} height={16} />
                       Delete
                     </button>
                   </div>
