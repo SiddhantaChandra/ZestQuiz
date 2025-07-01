@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { showErrorToast } from '@/lib/toast';
 import { ArrowLeft } from 'lucide-react';
+import ExplanationButton from '@/components/quiz/ExplanationButton';
 
 export default function QuizResults() {
   const params = useParams();
@@ -117,6 +118,13 @@ export default function QuizResults() {
                     </div>
                   </div>
                 ))}
+                {question.selectedOptionId && !question.options.find(opt => opt.id === question.selectedOptionId)?.isCorrect && (
+                  <ExplanationButton
+                    question={question.text}
+                    correctAnswer={question.options.find(opt => opt.isCorrect)?.text}
+                    userAnswer={question.options.find(opt => opt.id === question.selectedOptionId)?.text}
+                  />
+                )}
               </div>
             </div>
           ))}

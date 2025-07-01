@@ -7,9 +7,13 @@ import { api } from '@/lib/api';
 import SortableQuestion from './SortableQuestion';
 import Modal from '@/components/common/Modal';
 import { useRouter } from 'next/navigation';
+import ToggleAiButton from './ToggleAiButton';
+import AiQuizForm from './AiQuizForm';
+import { showWarningToast, showErrorToast, showQuizCreatedToast, showQuizUpdatedToast } from '@/lib/toast';
 
 export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   const router = useRouter();
+  const [isAiMode, setIsAiMode] = useState(!isEditing);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -25,6 +29,8 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   const [activeDragId, setActiveDragId] = useState(null);
   const [showExitModal, setShowExitModal] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState(null);
+  const [showAiConfirmModal, setShowAiConfirmModal] = useState(false);
+  const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false);
 
   // DnD sensors with modified settings for smoother dragging
   const sensors = useSensors(
@@ -32,6 +38,20 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       activationConstraint: null
     })
   );
+
+  const handleToggleAi = () => {
+    if (isDirty) {
+      setShowAiConfirmModal(true);
+    } else {
+      setIsAiMode(!isAiMode);
+    }
+  };
+
+  const handleAiQuizGenerated = (aiQuizData) => {
+    setFormData(aiQuizData);
+    setIsAiMode(false);
+    setIsDirty(true);
+  };
 
   // Handle form field changes
   const handleChange = (e) => {
@@ -143,67 +163,141 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     }
   };
 
-  // Form submission
+  const validateForm = () => {
+    // Validate title
+    if (!formData.title.trim()) {
+      showWarningToast('Please enter a quiz title');
+      return false;
+    }
+
+    // Validate description
+    if (!formData.description.trim()) {
+      showWarningToast('Please enter a quiz description');
+      return false;
+    }
+
+    // Validate tags
+    if (formData.tags.length === 0) {
+      showWarningToast('Please add at least one tag');
+      return false;
+    }
+
+    // Validate questions
+    if (formData.questions.length === 0) {
+      showWarningToast('Please add at least one question');
+      return false;
+    }
+
+    // Validate each question
+    for (let i = 0; i < formData.questions.length; i++) {
+      const question = formData.questions[i];
+      
+      // Check question text
+      if (!question.text.trim()) {
+        showWarningToast(`Question ${i + 1} is missing text`);
+        return false;
+      }
+
+      // Check options
+      if (question.options.length < 2) {
+        showWarningToast(`Question ${i + 1} needs at least 2 options`);
+        return false;
+      }
+
+      // Check if each option has text
+      const emptyOption = question.options.findIndex(opt => !opt.text.trim());
+      if (emptyOption !== -1) {
+        showWarningToast(`Question ${i + 1} has an empty option (Option ${emptyOption + 1})`);
+        return false;
+      }
+
+      // Check if correct answer is selected
+      if (!question.options.some(opt => opt.isCorrect)) {
+        showWarningToast(`Question ${i + 1} needs a correct answer selected`);
+        return false;
+      }
+
+      // Check explanation
+      if (!question.explanation.trim()) {
+        showWarningToast(`Question ${i + 1} is missing an explanation`);
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title.trim()) {
-      setError('Title is required');
-      return;
-    }
-    if (!formData.description.trim()) {
-      setError('Description is required');
-      return;
-    }
-    if (formData.questions.length === 0) {
-      setError('At least one question is required');
-      return;
-    }
 
-    // Validate questions and options
-    for (const question of formData.questions) {
-      if (!question.text.trim()) {
-        setError('All questions must have text');
-        return;
-      }
-      if (question.options.length !== 4) {
-        setError('Each question must have exactly 4 options');
-        return;
-      }
-      if (!question.options.some(opt => opt.isCorrect)) {
-        setError('Each question must have exactly one correct answer');
-        return;
-      }
-      if (question.options.filter(opt => opt.isCorrect).length > 1) {
-        setError('Each question can only have one correct answer');
-        return;
-      }
-      for (const option of question.options) {
-        if (!option.text.trim()) {
-          setError('All options must have text');
-          return;
-        }
-      }
+    if (!validateForm()) {
+      return;
     }
-
-    // Prepare the data for submission
-    const submissionData = {
-      ...formData,
-      questions: formData.questions.map((question, index) => ({
-        ...question,
-        orderIndex: index,
-        options: question.options.map((option, optIndex) => ({
-          ...option,
-          orderIndex: optIndex
-        }))
-      }))
-    };
 
     try {
-      await onSubmit(submissionData);
-      setIsDirty(false);
-      setError(null);
+      await onSubmit(formData);
+      if (isEditing) {
+        showQuizUpdatedToast();
+      } else {
+        showQuizCreatedToast();
+      }
+    } catch (error) {
+      showErrorToast(error.message || 'Failed to save quiz. Please try again.');
+    }
+  };
+
+  const generateAiQuestion = async () => {
+    if (!formData.title.trim()) {
+      setError('Please enter a quiz title/topic to generate a question');
+      return;
+    }
+
+    setIsGeneratingQuestion(true);
+    setError(null);
+
+    try {
+      const response = await api.post('/ai/generate-question', {
+        topic: formData.title,
+        existingQuestions: formData.questions
+      });
+
+      // Add detailed console logging
+      console.log('AI Question Generation Response:', {
+        fullResponse: response,
+        questionData: response.data,
+        question: response.data.question
+      });
+
+      // Structure the new question with the correct text field
+      const newQuestion = {
+        id: `temp_${Date.now()}`,
+        text: response.data.question.question, // Access the question text correctly
+        orderIndex: formData.questions.length,
+        options: response.data.question.options.map((opt, i) => ({
+          ...opt,
+          id: `temp_opt_${Date.now()}_${i}`,
+          orderIndex: i
+        }))
+      };
+
+      console.log('Processed New Question:', newQuestion);
+
+      setFormData(prev => {
+        const updatedQuestions = [...prev.questions, newQuestion].map((q, idx) => ({
+          ...q,
+          orderIndex: idx
+        }));
+        return {
+          ...prev,
+          questions: updatedQuestions
+        };
+      });
+      setIsDirty(true);
     } catch (err) {
-      setError(err.message || 'Failed to save quiz');
+      console.error('AI Question Generation Error:', err);
+      setError(err.message || 'Failed to generate question');
+    } finally {
+      setIsGeneratingQuestion(false);
     }
   };
 
@@ -220,8 +314,169 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty]);
 
+  // Add a blank question by default when in manual mode
+  useEffect(() => {
+    if (!isAiMode && formData.questions.length === 0) {
+      addQuestion();
+    }
+  }, [isAiMode]);
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">{isEditing ? 'Edit Quiz' : 'Create Quiz'}</h1>
+        {!isEditing && (      
+          <ToggleAiButton isAiMode={isAiMode} onToggle={handleToggleAi} />
+        )}
+      </div>
+
+      {isAiMode ? (
+        <AiQuizForm onQuizGenerated={handleAiQuizGenerated} />
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Title field */}
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              Title
+            </label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              className="block w-full px-4 py-2 rounded-md border border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+              placeholder="Enter quiz title"
+            />
+          </div>
+
+          {/* Description field */}
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              rows={3}
+              value={formData.description}
+              onChange={handleChange}
+              className="block w-full px-4 py-2 rounded-md border border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+              placeholder="Enter quiz description"
+            />
+          </div>
+
+          {/* Tags section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {formData.tags.map(tag => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-purple-100 text-purple-800"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="ml-2 inline-flex items-center justify-center hover:text-purple-600"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyPress={handleTagKeyPress}
+              placeholder="Type a tag and press Enter"
+              className="block w-full px-4 py-2 rounded-md border border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+            />
+          </div>
+
+          {/* Questions Section */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Questions</h2>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 transition-colors duration-200"
+              >
+                Save Quiz
+              </button>
+            </div>
+
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={formData.questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-4">
+                  {formData.questions.map((question, index) => (
+                    <div key={question.id} className="space-y-4">
+                      <SortableQuestion
+                        key={question.id}
+                        question={question}
+                        questionNumber={index + 1}
+                        onUpdate={(updates) => updateQuestion(question.id, updates)}
+                        onDelete={() => removeQuestion(question.id)}
+                        isDragging={activeDragId === question.id}
+                      />
+                      
+                      {/* Show action buttons only after the last question */}
+                      {index === formData.questions.length - 1 && (
+                        <div className="flex justify-end space-x-4 mt-4">
+                          <button
+                            type="button"
+                            onClick={generateAiQuestion}
+                            disabled={isGeneratingQuestion}
+                            className={`px-4 py-2 rounded-lg font-medium ${
+                              isGeneratingQuestion
+                                ? 'bg-purple-400 cursor-not-allowed'
+                                : 'bg-purple-600 hover:bg-purple-700'
+                            } text-white transition-colors duration-200`}
+                          >
+                            {isGeneratingQuestion ? 'Generating...' : 'Generate AI Question'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={addQuestion}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200"
+                          >
+                            Add Question
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex justify-between pt-6">
+            <button
+              type="button"
+              onClick={handleExit}
+              className="px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-purple-600 text-white rounded-md font-medium hover:bg-purple-700 transition-colors duration-200"
+            >
+              Save Quiz
+            </button>
+          </div>
+        </form>
+      )}
+
       {/* Delete Question Modal */}
       <Modal
         isOpen={questionToDelete !== null}
@@ -244,147 +499,26 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         isDestructive={true}
       />
 
+      {/* AI Mode Switch Confirmation Modal */}
+      <Modal
+        isOpen={showAiConfirmModal}
+        onClose={() => setShowAiConfirmModal(false)}
+        onConfirm={() => {
+          setIsAiMode(!isAiMode);
+          setShowAiConfirmModal(false);
+          setIsDirty(false);
+        }}
+        title="Switch to AI Mode"
+        message="Switching modes will discard your current changes. Are you sure you want to continue?"
+        confirmText="Switch Mode"
+        isDestructive={true}
+      />
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
         </div>
       )}
-
-      {/* Basic Quiz Info */}
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Title</label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            className="input-field"
-            placeholder="Enter quiz title"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Description</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="input-field min-h-[100px]"
-            placeholder="Enter quiz description"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Tags</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {formData.tags.map(tag => (
-              <span
-                key={tag}
-                className="bg-primary/10 text-primary px-2 py-1 rounded-full text-sm flex items-center gap-1"
-              >
-                {tag}
-                <button
-                  type="button"
-                  onClick={() => removeTag(tag)}
-                  className="hover:text-red-500"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <input
-            type="text"
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyPress={handleTagKeyPress}
-            className="input-field"
-            placeholder="Type a tag and press Enter"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Status</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="input-field"
-          >
-            <option value="DRAFT">Draft</option>
-            <option value="PUBLISHED">Published</option>
-            <option value="ARCHIVED">Archived</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Questions Section */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold">Questions</h2>
-          <button
-            type="button"
-            onClick={addQuestion}
-            className="btn-primary"
-          >
-            Add Question
-          </button>
-        </div>
-
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={formData.questions.map(q => q.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-6">
-              {formData.questions.map((question, index) => (
-                <SortableQuestion
-                  key={question.id}
-                  question={question}
-                  index={index}
-                  onUpdate={(updates) => updateQuestion(question.id, updates)}
-                  onDelete={() => removeQuestion(question.id)}
-                  isDragging={activeDragId === question.id}
-                  isAnyDragging={activeDragId !== null}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-
-        {/* Add Question Button at Bottom */}
-        {formData.questions.length > 0 && (
-          <div className="flex justify-center mt-6">
-            <button
-              type="button"
-              onClick={addQuestion}
-              className="btn-primary"
-            >
-              Add Another Question
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Form Actions */}
-      <div className="flex justify-between items-center pt-6 border-t">
-        <button
-          type="button"
-          onClick={handleExit}
-          className="btn-white"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="btn-success"
-        >
-          {isEditing ? 'Save Changes' : 'Create Quiz'}
-        </button>
-      </div>
-    </form>
+    </div>
   );
 } 

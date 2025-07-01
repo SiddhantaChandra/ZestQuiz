@@ -103,20 +103,69 @@ export class QuizService {
 
         // If questions are provided, handle them
         if (questions) {
-          // Delete existing questions (this will cascade delete options due to our schema)
-          await prisma.question.deleteMany({
-            where: { quizId: id },
-          });
-
-          // Create new questions with their options
+          // Get all existing question IDs
+          const existingQuestionIds = existingQuiz.questions.map(q => q.id);
+          
+          // Process each question
           for (const question of questions) {
-            const { options, ...questionData } = question;
-            await prisma.question.create({
-              data: {
-                ...questionData,
-                quizId: id,
-                options: {
-                  create: options,
+            if (question.id) {
+              // Update existing question
+              await prisma.question.update({
+                where: { id: question.id },
+                data: {
+                  text: question.text,
+                  orderIndex: question.orderIndex,
+                  options: {
+                    upsert: question.options.map(option => ({
+                      where: {
+                        id: option.id || 'new', // Use 'new' for new options
+                      },
+                      create: {
+                        text: option.text,
+                        isCorrect: option.isCorrect,
+                        orderIndex: option.orderIndex,
+                      },
+                      update: {
+                        text: option.text,
+                        isCorrect: option.isCorrect,
+                        orderIndex: option.orderIndex,
+                      },
+                    })),
+                  },
+                },
+              });
+            } else {
+              // Create new question
+              await prisma.question.create({
+                data: {
+                  text: question.text,
+                  orderIndex: question.orderIndex,
+                  quizId: id,
+                  options: {
+                    create: question.options.map(option => ({
+                      text: option.text,
+                      isCorrect: option.isCorrect,
+                      orderIndex: option.orderIndex,
+                    })),
+                  },
+                },
+              });
+            }
+          }
+
+          // Delete questions that are no longer in the update
+          const updatedQuestionIds = questions
+            .filter(q => q.id)
+            .map(q => q.id);
+          
+          const questionsToDelete = existingQuestionIds
+            .filter(id => !updatedQuestionIds.includes(id));
+
+          if (questionsToDelete.length > 0) {
+            await prisma.question.deleteMany({
+              where: {
+                id: {
+                  in: questionsToDelete,
                 },
               },
             });
@@ -139,6 +188,7 @@ export class QuizService {
         });
       });
     } catch (error) {
+      console.error('Quiz update error:', error);
       if (error instanceof NotFoundException) {
         throw error;
       }

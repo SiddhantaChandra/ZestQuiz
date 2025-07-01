@@ -21,9 +21,9 @@ export default function Header() {
             <Image
               src="/ZestQuizLogo.webp"
               alt="ZestQuiz Logo"
-              width={200}
-              height={100}
-              
+              width={150}
+              height={150}
+              className="w-auto h-14"
             />
           </Link>
           

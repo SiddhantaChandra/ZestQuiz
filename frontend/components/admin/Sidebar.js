@@ -9,7 +9,21 @@ export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
 
-  const isActive = (path) => pathname === path;
+  const isActive = (path) => {
+    if (path === '/admin/dashboard') {
+      // For dashboard, only match exact path
+      return pathname === path ? 'bg-purple-100 text-purple-900' : 'text-gray-600 hover:bg-gray-50';
+    } else if (path === '/admin/quizzes/new') {
+      // For create quiz, only match exact path
+      return pathname === path ? 'bg-purple-100 text-purple-900' : 'text-gray-600 hover:bg-gray-50';
+    } else if (path === '/admin/quizzes') {
+      // For manage quizzes, match the path but exclude /new and other subpaths
+      return pathname.startsWith(path) && pathname.split('/').length === 3 
+        ? 'bg-purple-100 text-purple-900' 
+        : 'text-gray-600 hover:bg-gray-50';
+    }
+    return 'text-gray-600 hover:bg-gray-50';
+  };
 
   const navItems = [
     {
@@ -59,11 +73,7 @@ export default function Sidebar() {
             <li key={item.href}>
               <Link
                 href={item.href}
-                className={`p-2 rounded flex items-center gap-2 transition-all duration-200 ${
-                  isActive(item.href)
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-gray-700 hover:bg-secondary/10 hover:text-primary'
-                }`}
+                className={`p-2 rounded flex items-center gap-2 transition-all duration-200 ${isActive(item.href)}`}
               >
                 <Image src={item.icon} alt={item.label} width={28} height={28} />
                 <span className={`transition-opacity duration-300 ${

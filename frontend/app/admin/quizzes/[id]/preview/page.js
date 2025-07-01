@@ -83,9 +83,9 @@ export default function QuizPreviewPage() {
           <div>
             <h2 className="text-xl font-semibold mb-2">Tags</h2>
             <div className="flex flex-wrap gap-2">
-              {quiz.tags.map((tag, index) => (
+              {quiz.tags.map((tag) => (
                 <span
-                  key={index}
+                  key={tag}
                   className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
                 >
                   {tag}

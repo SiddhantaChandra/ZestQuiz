@@ -1,4 +1,4 @@
-import { IsString, IsArray, IsEnum, IsOptional, IsBoolean, ArrayMinSize, MinLength, ValidateNested, IsNumber } from 'class-validator';
+import { IsString, IsArray, IsEnum, IsOptional, IsBoolean, ArrayMinSize, MinLength, ValidateNested, IsNumber, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { QuizStatus } from '@prisma/client';
 
@@ -12,6 +12,10 @@ class OptionDto {
 
   @IsNumber()
   orderIndex: number;
+
+  @IsOptional()
+  @IsUUID()
+  id?: string;
 }
 
 class QuestionDto {
@@ -26,6 +30,10 @@ class QuestionDto {
   @Type(() => OptionDto)
   @ArrayMinSize(4)
   options: OptionDto[];
+
+  @IsOptional()
+  @IsUUID()
+  id?: string;
 }
 
 export class CreateQuizDto {

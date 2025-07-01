@@ -17,11 +17,21 @@ const nunito = Nunito({
 export const metadata = {
   title: 'ZestQuiz - Interactive Learning Platform',
   description: 'Engage in fun and interactive quizzes with ZestQuiz',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    shortcut: ['/favicon.ico'],
+    apple: ['/favicon.ico'],
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${fredoka.variable} ${nunito.variable}`}>
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </head>
       <body className="min-h-screen bg-background font-fredoka text-text">
         <LayoutWrapper>
           {children}

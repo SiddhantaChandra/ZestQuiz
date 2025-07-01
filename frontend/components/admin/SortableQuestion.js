@@ -5,7 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useState } from 'react';
 import Modal from '@/components/common/Modal';
 
-export default function SortableQuestion({ question, index, onUpdate, onDelete, isAnyDragging, isDragging }) {
+export default function SortableQuestion({ question, questionNumber, onUpdate, onDelete, isAnyDragging, isDragging }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const {
@@ -81,7 +81,7 @@ export default function SortableQuestion({ question, index, onUpdate, onDelete, 
           >
             ⋮⋮
           </div>
-          <span className="text-gray-500 flex-shrink-0">Question {index + 1}</span>
+          <span className="text-gray-500 flex-shrink-0">Question {questionNumber}</span>
           <button
             type="button"
             onClick={() => setShowDeleteModal(true)}
@@ -97,7 +97,7 @@ export default function SortableQuestion({ question, index, onUpdate, onDelete, 
         <div className="px-4 pb-4 overflow-hidden">
           <input
             type="text"
-            value={question.text}
+            value={question.text || ''}
             onChange={(e) => onUpdate({ text: e.target.value })}
             className="input-field"
             placeholder="Enter question text"
@@ -122,7 +122,7 @@ export default function SortableQuestion({ question, index, onUpdate, onDelete, 
               />
               <input
                 type="text"
-                value={option.text}
+                value={option.text || ''}
                 onChange={(e) => handleOptionChange(optIndex, 'text', e.target.value)}
                 className="input-field"
                 placeholder={`Option ${optIndex + 1}`}
