@@ -6,8 +6,9 @@ import ClientLayout from './ClientLayout';
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
   const isQuizTakingRoute = pathname?.includes('/quizzes/') && pathname?.includes('/take');
+  const isAdminRoute = pathname?.startsWith('/admin');
 
-  if (isQuizTakingRoute) {
+  if (isQuizTakingRoute || isAdminRoute) {
     return children;
   }
 

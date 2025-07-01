@@ -11,6 +11,8 @@ import ToggleAiButton from './ToggleAiButton';
 import AiQuizForm from './AiQuizForm';
 import { showWarningToast, showErrorToast, showQuizCreatedToast, showQuizUpdatedToast } from '@/lib/toast';
 
+const generateUniqueId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
 export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   const router = useRouter();
   const [isAiMode, setIsAiMode] = useState(!isEditing);
@@ -38,6 +40,23 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       activationConstraint: null
     })
   );
+
+  // Ensure all questions and options have IDs
+  useEffect(() => {
+    if (formData.questions.some(q => !q.id || q.options.some(o => !o.id))) {
+      setFormData(prev => ({
+        ...prev,
+        questions: prev.questions.map(question => ({
+          ...question,
+          id: question.id || generateUniqueId('question'),
+          options: question.options.map(option => ({
+            ...option,
+            id: option.id || generateUniqueId('option')
+          }))
+        }))
+      }));
+    }
+  }, []);
 
   const handleToggleAi = () => {
     if (isDirty) {
@@ -86,11 +105,11 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   // Handle question operations
   const addQuestion = () => {
     const newQuestion = {
-      id: `temp_${Date.now()}`,
+      id: generateUniqueId('question'),
       text: '',
       orderIndex: formData.questions.length,
       options: Array(4).fill(null).map((_, i) => ({
-        id: `temp_opt_${Date.now()}_${i}`,
+        id: generateUniqueId('option'),
         text: '',
         isCorrect: i === 0,
         orderIndex: i
@@ -229,14 +248,33 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     }
 
     try {
-      await onSubmit(formData);
+      // Format the data according to DTO requirements
+      const formattedData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        tags: formData.tags,
+        status: formData.status || 'DRAFT',
+        isAIGenerated: formData.isAIGenerated || false,
+        questions: formData.questions.map((question, qIndex) => ({
+          text: question.text.trim(),
+          orderIndex: qIndex,
+          options: question.options.map((option, oIndex) => ({
+            text: option.text.trim(),
+            isCorrect: option.isCorrect,
+            orderIndex: oIndex
+          }))
+        }))
+      };
+
+      await onSubmit(formattedData);
       if (isEditing) {
         showQuizUpdatedToast();
       } else {
         showQuizCreatedToast();
       }
     } catch (error) {
-      showErrorToast(error.message || 'Failed to save quiz. Please try again.');
+      console.error('Quiz submission error:', error.response?.data || error);
+      showErrorToast(error.response?.data?.message || error.message || 'Failed to save quiz. Please try again.');
     }
   };
 
@@ -410,43 +448,46 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
             >
               <SortableContext items={formData.questions.map(q => q.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-4">
-                  {formData.questions.map((question, index) => (
-                    <div key={question.id} className="space-y-4">
-                      <SortableQuestion
-                        question={question}
-                        questionNumber={index + 1}
-                        onUpdate={(updates) => updateQuestion(question.id, updates)}
-                        onDelete={() => removeQuestion(question.id)}
-                        isDragging={activeDragId === question.id}
-                        isAnyDragging={activeDragId !== null}
-                      />
-                      
-                      {/* Show action buttons only after the last question */}
-                      {index === formData.questions.length - 1 && (
-                        <div className="flex justify-end space-x-4 mt-4">
-                          <button
-                            type="button"
-                            onClick={generateAiQuestion}
-                            disabled={isGeneratingQuestion}
-                            className={`px-4 py-2 rounded-lg font-medium ${
-                              isGeneratingQuestion
-                                ? 'bg-purple-400 cursor-not-allowed'
-                                : 'bg-purple-600 hover:bg-purple-700'
-                            } text-white transition-colors duration-200`}
-                          >
-                            {isGeneratingQuestion ? 'Generating...' : 'Generate AI Question'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={addQuestion}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200"
-                          >
-                            Add Question
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {formData.questions.map((question, index) => {
+                    const questionId = question.id || `temp_${index}`;
+                    return (
+                      <div key={`question_${questionId}`} className="space-y-4">
+                        <SortableQuestion
+                          question={{ ...question, id: questionId }}
+                          questionNumber={index + 1}
+                          onUpdate={(updates) => updateQuestion(questionId, updates)}
+                          onDelete={removeQuestion}
+                          isAnyDragging={!!activeDragId}
+                          isDragging={activeDragId === questionId}
+                        />
+                        
+                        {/* Show action buttons only after the last question */}
+                        {index === formData.questions.length - 1 && (
+                          <div className="flex justify-end space-x-4 mt-4">
+                            <button
+                              type="button"
+                              onClick={generateAiQuestion}
+                              disabled={isGeneratingQuestion}
+                              className={`px-4 py-2 rounded-lg font-medium ${
+                                isGeneratingQuestion
+                                  ? 'bg-purple-400 cursor-not-allowed'
+                                  : 'bg-purple-600 hover:bg-purple-700'
+                              } text-white transition-colors duration-200`}
+                            >
+                              {isGeneratingQuestion ? 'Generating...' : 'Generate AI Question'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={addQuestion}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200"
+                            >
+                              Add Question
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </SortableContext>
             </DndContext>

@@ -259,6 +259,7 @@ Is this message relevant to the quiz content, asking about the questions, answer
 
 Format: JSON object with this structure:
 {
+  "title": "Create an engaging, creative title that captures interest. Use wordplay, alliteration, or clever phrases. For example, instead of 'Quiz about World Capitals' use 'Capital Conquest: Around the World in 10 Questions' or instead of 'Quiz about Harry Potter' use 'Hogwarts & Beyond: A Magical Knowledge Challenge'",
   "quiz": [
     {
       "question": "Question text here?",
@@ -275,6 +276,13 @@ Format: JSON object with this structure:
 }
 
 Requirements:
+- Title should be creative and engaging, using techniques like:
+  * Wordplay or puns
+  * Alliteration
+  * Clever phrases
+  * Pop culture references when relevant
+  * Intriguing questions
+  * Avoid generic titles like "Quiz about X" or "Test your knowledge of X"
 - First tag MUST be one of these categories: ${VALID_CATEGORIES.join(', ')}
 - Description should be 2-3 sentences explaining the quiz content and learning objectives
 - Include EXACTLY 4 tags (first being the category)

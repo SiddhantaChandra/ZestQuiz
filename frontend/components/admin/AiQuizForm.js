@@ -6,6 +6,8 @@ import { showSuccessToast, showErrorToast } from '@/lib/toast';
 
 const questionOptions = [5, 10, 15, 20];
 
+const generateUniqueId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
 export default function AiQuizForm({ onQuizGenerated, onCancel }) {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,15 +25,17 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
 
       // Transform AI response to quiz data
       const quizData = {
-        title: `Quiz about ${formData.topic}`,
+        title: aiResponse.title || `Quiz about ${formData.topic}`,
         description: aiResponse.description,
         tags: aiResponse.tags,
         status: 'DRAFT',
         isAiGenerated: true,
         questions: aiResponse.quiz.map((q, index) => ({
+          id: generateUniqueId('question'),
           text: q.question,
           orderIndex: index,
           options: q.options.map((opt, optIndex) => ({
+            id: generateUniqueId('option'),
             text: opt.text,
             isCorrect: opt.isCorrect,
             orderIndex: optIndex,
