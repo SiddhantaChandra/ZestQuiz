@@ -29,4 +29,5 @@ COPY . .
 
 COPY --from=development /usr/src/app/dist ./dist
 
-CMD ["node", "dist/main"] 
+# Simple fix: Run migrations and start the app
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
