@@ -51,5 +51,5 @@ RUN echo "Contents of dist in production:" && \
     find dist/ -name "main.js" && \
     echo "Setup complete!"
 
-# Simple fix: Run migrations and start the app
+# Run migrations and start the app
 CMD npx prisma migrate deploy && node dist/main.js

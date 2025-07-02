@@ -15,7 +15,7 @@ async function main() {
     data: {
       email: 'admin@zestquiz.com',
       username: 'admin',
-      password: await bcrypt.hash('adminPassword', 10),
+      password: await bcrypt.hash('Admin@123', 10),
       role: 'ADMIN',
     },
   });
@@ -24,7 +24,7 @@ async function main() {
     data: {
       email: 'user@zestquiz.com',
       username: 'user',
-      password: await bcrypt.hash('userPassword', 10),
+      password: await bcrypt.hash('User@123', 10),
       role: 'USER',
     },
   });
@@ -69,7 +69,19 @@ async function main() {
     },
   });
 
-  console.log('Seed data created successfully');
+  console.log({
+    message: 'Seed data created successfully',
+    users: {
+      admin: {
+        email: 'admin@zestquiz.com',
+        password: 'Admin@123'
+      },
+      user: {
+        email: 'user@zestquiz.com',
+        password: 'User@123'
+      }
+    }
+  });
 }
 
 main()
