@@ -22,7 +22,8 @@ RUN echo "Contents of directory before build:" && \
     echo "Contents of dist after build:" && \
     ls -la dist/ && \
     echo "Checking for main.js..." && \
-    test -f dist/main.js && echo "main.js exists!" || echo "main.js not found!"
+    find dist/ -name "main.js" && \
+    echo "Build complete!"
 
 # Production stage
 FROM node:20-alpine AS production
@@ -41,12 +42,14 @@ COPY tsconfig*.json ./
 
 RUN npm install --only=production
 
-# Copy the built dist and source files
+# Copy the built dist
 COPY --from=development /usr/src/app/dist ./dist
-COPY --from=development /usr/src/app/src ./src
 
 # Debug dist contents
-RUN echo "Contents of dist in production:" && ls -la dist/
+RUN echo "Contents of dist in production:" && \
+    ls -la dist/ && \
+    find dist/ -name "main.js" && \
+    echo "Setup complete!"
 
 # Simple fix: Run migrations and start the app
 CMD npx prisma migrate deploy && node dist/main.js
