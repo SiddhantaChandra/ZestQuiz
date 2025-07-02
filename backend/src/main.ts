@@ -1,3 +1,8 @@
+// Immediate log to verify Node.js is starting
+console.log('Node.js process started at:', new Date().toISOString());
+console.log('Current directory:', process.cwd());
+console.log('Files in dist:', require('fs').readdirSync('./dist').join(', '));
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
