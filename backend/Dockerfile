@@ -3,6 +3,9 @@ FROM node:20-alpine AS development
 
 WORKDIR /usr/src/app
 
+# Install specific npm version
+RUN npm install -g npm@11.3.0
+
 COPY package*.json ./
 COPY prisma ./prisma/
 
@@ -19,6 +22,9 @@ ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /usr/src/app
+
+# Install specific npm version
+RUN npm install -g npm@11.3.0
 
 COPY package*.json ./
 COPY prisma ./prisma/
