@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "npx prisma migrate deploy && echo 'Migrations complete, starting application...' && node dist/main.js"
+startCommand = "npx prisma migrate deploy && echo 'Migrations complete, starting NestJS application on port ${PORT:-3001}...' && node dist/main.js"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 

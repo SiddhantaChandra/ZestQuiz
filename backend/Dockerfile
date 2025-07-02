@@ -30,4 +30,6 @@ COPY . .
 COPY --from=development /usr/src/app/dist ./dist
 
 # Simple fix: Run migrations and start the app
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+# CMD ["sh", "-c", "npx prisma migrate deploy && echo 'Starting NestJS application...' && node dist/main.js"]
+# TEMPORARY: Test if basic node server works
+CMD ["sh", "-c", "npx prisma migrate deploy && echo 'Starting test server...' && node src/test-server.js"]
