@@ -20,11 +20,9 @@ export const metadata = {
   title: 'ZestQuiz - Interactive Learning Platform',
   description: 'Engage in fun and interactive quizzes with ZestQuiz',
   icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-    ],
-    shortcut: ['/favicon.ico'],
-    apple: ['/favicon.ico'],
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
   },
 };
 

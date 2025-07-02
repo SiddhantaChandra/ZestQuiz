@@ -18,4 +18,10 @@ export class AuthController {
   async getProfile(@Request() req) {
     return this.authService.getProfile(req.user);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('check')
+  async checkAuth(@Request() req) {
+    return this.authService.getProfile(req.user);
+  }
 } 
