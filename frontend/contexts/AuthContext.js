@@ -37,13 +37,22 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await api.get('/auth/check');
-        const userData = response.data;
-        setUser(userData);
-        return userData;
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        
+        if (token) {
+          setCookie('token', token, 7);  // Sync cookie with localStorage
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          
+          const response = await api.get('/auth/check');
+          setUser(response.data);
+        } else {
+          setUser(null);
+        }
       } catch (error) {
-        setUser(null);
-        throw error;
+        cleanupAuth();
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -61,13 +70,16 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { token, ...userData } = response.data;
+      const { access_token, user } = response.data;
       
-      localStorage.setItem('token', token);
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(userData);
+      localStorage.setItem('token', access_token);
+      setCookie('token', access_token, 7);
+      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+      setUser(user);
+      
+      showLoginSuccessToast(user.email.split('@')[0]);
 
-      if (userData.role === 'ADMIN') {
+      if (user.role === 'ADMIN') {
         router.push('/admin/dashboard');
       } else {
         router.push('/quizzes');

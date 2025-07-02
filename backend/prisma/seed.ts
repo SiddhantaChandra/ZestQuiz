@@ -4,12 +4,18 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.userAnswer.deleteMany();
-  await prisma.quizAttempt.deleteMany();
-  await prisma.option.deleteMany();
-  await prisma.question.deleteMany();
-  await prisma.quiz.deleteMany();
-  await prisma.user.deleteMany();
+  // Clean up existing data if any tables exist
+  try {
+    await prisma.chatMessage.deleteMany();
+    await prisma.userAnswer.deleteMany();
+    await prisma.quizAttempt.deleteMany();
+    await prisma.option.deleteMany();
+    await prisma.question.deleteMany();
+    await prisma.quiz.deleteMany();
+    await prisma.user.deleteMany();
+  } catch (error) {
+    console.log('Some tables do not exist yet, proceeding with seeding...');
+  }
 
   const adminUser = await prisma.user.create({
     data: {
@@ -28,7 +34,6 @@ async function main() {
       role: 'USER',
     },
   });
-
 
   const jsQuiz = await prisma.quiz.create({
     data: {
