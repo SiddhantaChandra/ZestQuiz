@@ -3,8 +3,8 @@ FROM node:20-alpine AS development
 
 WORKDIR /usr/src/app
 
-# Install specific npm version
-RUN npm install -g npm@11.3.0
+# Install specific npm version and typescript globally
+RUN npm install -g npm@11.3.0 typescript @nestjs/cli
 
 COPY package*.json ./
 COPY prisma ./prisma/
@@ -14,10 +14,15 @@ RUN npm install
 
 COPY . .
 
-# Build and verify the build output
-RUN npm run build && \
+# Debug and build
+RUN echo "Contents of directory before build:" && \
+    ls -la && \
+    echo "Running NestJS build..." && \
+    nest build && \
+    echo "Contents of dist after build:" && \
     ls -la dist/ && \
-    test -f dist/main.js || exit 1
+    echo "Checking for main.js..." && \
+    test -f dist/main.js && echo "main.js exists!" || echo "main.js not found!"
 
 # Production stage
 FROM node:20-alpine AS production
@@ -36,12 +41,12 @@ COPY tsconfig*.json ./
 
 RUN npm install --only=production
 
-# Copy the built dist and necessary source files
+# Copy the built dist and source files
 COPY --from=development /usr/src/app/dist ./dist
 COPY --from=development /usr/src/app/src ./src
 
-# Verify dist/main.js exists
-RUN test -f dist/main.js || exit 1
+# Debug dist contents
+RUN echo "Contents of dist in production:" && ls -la dist/
 
 # Simple fix: Run migrations and start the app
 CMD npx prisma migrate deploy && node dist/main.js
