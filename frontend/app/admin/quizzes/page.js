@@ -37,19 +37,19 @@ export default function QuizListPage() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded">
         {error}
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="p-6 bg-background dark:bg-background-dark min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Manage Quizzes</h1>
+        <h1 className="text-3xl font-bold text-text dark:text-text-dark">Manage Quizzes</h1>
         <a
           href="/admin/quizzes/new"
-          className="btn-primary px-6 py-2 rounded-lg"
+          className="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-lg transition-colors"
         >
           Create New Quiz
         </a>

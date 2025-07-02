@@ -53,7 +53,7 @@ export default function EditQuizClient() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded">
         {error}
       </div>
     );
@@ -61,5 +61,9 @@ export default function EditQuizClient() {
 
   if (!quiz) return null;
 
-  return <QuizForm quiz={quiz} onSubmit={handleSubmit} isEditing={true} />;
+  return (
+    <div className="p-6 bg-background dark:bg-background-dark min-h-screen">
+      <QuizForm quiz={quiz} onSubmit={handleSubmit} isEditing={true} />
+    </div>
+  );
 } 

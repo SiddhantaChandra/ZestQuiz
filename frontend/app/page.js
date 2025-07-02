@@ -62,7 +62,7 @@ export default function Home() {
             className={`px-4 py-2 rounded-full transition-colors ${
               tag === selectedTag 
                 ? 'bg-primary text-white' 
-                : 'bg-white hover:bg-background border border-black'
+                : 'bg-card hover:bg-background border border-border text-text'
             }`}
             onClick={() => {
               setSelectedTag(tag);
@@ -102,13 +102,13 @@ export default function Home() {
                 <div key={quiz.id} className="card p-6 hover:scale-[1.02] transition-transform flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1 mr-3">
-                      <h3 className="text-xl font-semibold mb-2">{quiz.title}</h3>
+                      <h3 className="text-xl font-semibold mb-2 text-text">{quiz.title}</h3>
                       <p className="text-sm text-text/70 line-clamp-2">
                         {quiz.description}
                       </p>
                     </div>
                     <div className="flex-shrink-0">
-                      <span className="bg-secondary px-2 py-0.5 rounded-md text-sm">
+                      <span className="bg-secondary text-text font-medium px-3 py-1 rounded-md text-sm border border-border text-gray-800 dark:text-gray-800">
                         {quiz.questions?.length || 0} Questions
                       </span>
                     </div>
@@ -119,10 +119,10 @@ export default function Home() {
                         <button
                           key={tag}
                           onClick={() => setSelectedTag(tag)}
-                          className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors capitalize ${
                             tag === selectedTag
                               ? 'bg-primary text-white'
-                              : 'bg-background hover:bg-background/80'
+                              : 'bg-background hover:bg-background/80 text-text'
                           }`}
                         >
                           {tag}

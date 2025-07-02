@@ -17,7 +17,7 @@ export default function CreateQuizPage() {
   };
 
   return (
-    <div>
+    <div className="p-6 bg-background dark:bg-background-dark min-h-screen">
       <QuizForm onSubmit={handleSubmit} />
     </div>
   );

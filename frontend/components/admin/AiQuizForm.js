@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { showSuccessToast, showErrorToast } from '@/lib/toast';
+import { CircleNotch } from '@phosphor-icons/react';
 
 const questionOptions = [5, 10, 15, 20];
 
@@ -32,11 +33,11 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6">Generate Quiz with AI</h2>
+    <div className="p-6 bg-card dark:bg-card-dark rounded-lg shadow-custom border border-border">
+      <h2 className="text-2xl font-bold mb-6 text-text dark:text-text-dark">Generate Quiz with AI</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="topic" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="topic" className="block text-sm font-medium text-text dark:text-text-dark mb-2">
             Quiz Topic
           </label>
           <input
@@ -44,21 +45,21 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
             id="topic"
             value={formData.topic}
             onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+            className="w-full px-4 py-2 bg-background dark:bg-background-dark border border-border rounded-lg text-text dark:text-text-dark placeholder-text/50 dark:placeholder-text-dark/50 focus:outline-none focus:ring-2 focus:ring-primary/30 dark:focus:ring-primary/50"
             placeholder="Enter a topic (e.g., 'JavaScript Basics', 'World History')"
             required
           />
         </div>
 
         <div>
-          <label htmlFor="numQuestions" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="numQuestions" className="block text-sm font-medium text-text dark:text-text-dark mb-2">
             Number of Questions
           </label>
           <select
             id="numQuestions"
             value={formData.numQuestions}
             onChange={(e) => setFormData({ ...formData, numQuestions: Number(e.target.value) })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+            className="w-full px-4 py-2 bg-background dark:bg-background-dark border border-border rounded-lg text-text dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-primary/30 dark:focus:ring-primary/50"
           >
             {questionOptions.map((num) => (
               <option key={num} value={num}>
@@ -68,38 +69,19 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
           </select>
         </div>
 
-        <div className="flex space-x-4">
+        <div className="flex gap-4">
           <button
             type="submit"
             disabled={isLoading}
-            className={`flex-1 py-3 px-4 text-white font-medium rounded-md ${
+            className={`flex-1 py-3 px-4 text-white font-medium rounded-lg transition-colors ${
               isLoading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:ring-purple-300'
+                ? 'bg-primary/50 cursor-not-allowed'
+                : 'bg-primary hover:bg-primary-hover focus:ring-2 focus:ring-primary/30'
             }`}
           >
             {isLoading ? (
-              <span className="flex items-center justify-center">
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
+              <span className="flex items-center justify-center gap-2">
+                <CircleNotch size={20} className="animate-spin" />
                 Generating Quiz...
               </span>
             ) : (
@@ -111,12 +93,18 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
               type="button"
               onClick={onCancel}
               disabled={isLoading}
-              className="flex-1 py-3 px-4 text-gray-700 font-medium rounded-md border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:ring-gray-300"
+              className="flex-1 py-3 px-4 bg-card dark:bg-card-dark text-text dark:text-text-dark font-medium rounded-lg border border-border hover:bg-background dark:hover:bg-background-dark transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
           )}
         </div>
+
+        {error && (
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg">
+            {error}
+          </div>
+        )}
       </form>
     </div>
   );

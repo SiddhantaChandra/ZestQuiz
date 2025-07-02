@@ -110,15 +110,15 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
   };
 
   const statusColors = {
-    DRAFT: 'bg-yellow-100 text-yellow-800',
-    ACTIVE: 'bg-green-100 text-green-800',
-    INACTIVE: 'bg-red-100 text-red-800',
+    DRAFT: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200',
+    ACTIVE: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200',
+    INACTIVE: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200',
   };
 
   return (
     <div>
       {error && (
-        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg">
           {error}
         </div>
       )}
@@ -140,7 +140,7 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
           <input
             type="text"
             placeholder="Search quizzes..."
-            className="px-4 py-2 border rounded-lg flex-1"
+            className="px-4 py-2 bg-card dark:bg-card-dark border border-border rounded-lg flex-1 text-text dark:text-text-dark placeholder-text/50 dark:placeholder-text-dark/50"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -154,7 +154,7 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
             </div>
           )}
           <select
-            className="px-4 py-2 border rounded-lg min-w-[120px]"
+            className="px-4 py-2 bg-card dark:bg-card-dark border border-border rounded-lg min-w-[120px] text-text dark:text-text-dark"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -171,12 +171,12 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
             {selectedTags.map(tag => (
               <span
                 key={tag}
-                className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                className="bg-background dark:bg-background-dark text-text dark:text-text-dark px-3 py-1 rounded-full text-sm flex items-center gap-2 border border-border"
               >
                 {tag}
                 <button
                   onClick={() => setSelectedTags(selectedTags.filter(t => t !== tag))}
-                  className="hover:text-red-600"
+                  className="hover:text-red-500 dark:hover:text-red-400"
                 >
                   ×
                 </button>
@@ -187,41 +187,41 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
       </div>
 
       {/* Quiz List */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-card dark:bg-card-dark rounded-lg shadow-custom border border-border">
         <table className="min-w-full">
           <thead>
-            <tr className="border-b">
-              <th className="px-6 py-3 text-left">Title</th>
-              <th className="px-6 py-3 text-left">Status</th>
-              <th className="px-6 py-3 text-left">Questions</th>
-              <th className="px-6 py-3 text-left">Tags</th>
-              <th className="px-6 py-3 text-left">Actions</th>
+            <tr className="border-b border-border">
+              <th className="px-6 py-3 text-left text-text dark:text-text-dark">Title</th>
+              <th className="px-6 py-3 text-left text-text dark:text-text-dark">Status</th>
+              <th className="px-6 py-3 text-left text-text dark:text-text-dark">Questions</th>
+              <th className="px-6 py-3 text-left text-text dark:text-text-dark">Tags</th>
+              <th className="px-6 py-3 text-left text-text dark:text-text-dark">Actions</th>
             </tr>
           </thead>
           <tbody>
             {paginatedQuizzes.map((quiz) => (
-              <tr key={quiz.id} className="border-b hover:bg-gray-50">
-                <td className="px-6 py-4">{quiz.title}</td>
+              <tr key={quiz.id} className="border-b border-border hover:bg-background/50 dark:hover:bg-background-dark/50 transition-colors">
+                <td className="px-6 py-4 text-text dark:text-text-dark">{quiz.title}</td>
                 <td className="px-6 py-4">
                   <select
-                    data-quiz-id={quiz.id}
-                    className={`px-2 py-1 rounded ${statusColors[quiz.status]} ${loading[quiz.id] ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`px-2 py-1 rounded ${statusColors[quiz.status]} border border-border`}
                     value={quiz.status}
                     onChange={(e) => handleStatusChange(quiz.id, e.target.value)}
                     disabled={loading[quiz.id]}
+                    data-quiz-id={quiz.id}
                   >
                     <option value="DRAFT">Draft</option>
                     <option value="ACTIVE">Active</option>
                     <option value="INACTIVE">Inactive</option>
                   </select>
                 </td>
-                <td className="px-6 py-4">{quiz.questions?.length || 0}</td>
+                <td className="px-6 py-4 text-text dark:text-text-dark">{quiz.questions?.length || 0}</td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-1">
-                    {quiz.tags && quiz.tags.map(tag => (
+                  <div className="flex flex-wrap gap-2">
+                    {quiz.tags?.map(tag => (
                       <span
                         key={tag}
-                        className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-sm"
+                        className="bg-background dark:bg-background-dark text-text dark:text-text-dark px-2 py-1 rounded-full text-xs border border-border capitalize"
                       >
                         {tag}
                       </span>
@@ -229,21 +229,18 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex gap-4">
+                  <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(quiz.id)}
                       disabled={loading[quiz.id]}
-                      className={`bg-pastleBlue hover:bg-pastleBlue-hover text-pastleBlue-text flex items-center gap-2 px-2 py-1 min-w-16 justify-center rounded-md border border-black ${
-                        loading[quiz.id] ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                    >Edit
+                      className="bg-primary/10 hover:bg-primary/20 text-primary dark:text-primary-light px-3 py-1 rounded-md border border-border min-w-16 text-center transition-colors"
+                    >
+                      Edit
                     </button>
                     <button
                       onClick={() => setDeleteModal({ isOpen: true, quizId: quiz.id })}
                       disabled={loading[quiz.id]}
-                      className={`bg-pastleRed hover:bg-pastleRed-hover text-pastleRed-text flex items-center gap-2 px-2 py-1 min-w-16 justify-center rounded-md border border-black ${
-                        loading[quiz.id] ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
+                      className="bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 px-3 py-1 rounded-md border border-border min-w-16 text-center transition-colors"
                     >
                       Delete
                     </button>
@@ -253,26 +250,26 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
             ))}
           </tbody>
         </table>
-      </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-4 flex justify-center gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`px-3 py-1 rounded ${
-                currentPage === page
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-200 hover:bg-gray-300'
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-        </div>
-      )}
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 p-4 border-t border-border">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 rounded-md transition-colors ${
+                  currentPage === page
+                    ? 'bg-primary text-white'
+                    : 'bg-background dark:bg-background-dark text-text dark:text-text-dark hover:bg-background-dark/50'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 } 

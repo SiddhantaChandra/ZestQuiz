@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -8,31 +9,35 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: '#F2F3F4',
-        primary: '#7e80d8',
-        'primary-hover': '#6b6ec7',
-        secondary: '#f7d932',
-        'secondary-hover': '#f5d41e',
+        background: 'var(--background)',
+        primary: 'var(--primary)',
+        'primary-hover': 'var(--primary-hover)',
+        secondary: 'var(--secondary)',
+        'secondary-hover': 'var(--secondary-hover)',
         success: {
-          DEFAULT: '#10B981',
-          hover: '#059669'
+          DEFAULT: 'var(--success)',
+          hover: 'var(--success-hover)'
         },
-        pastleGreen: {
-          DEFAULT: '#bce5bc',
-          hover: '#a9cea9',
-          text: '#2d7b2d'
+        'pastle-green': {
+          DEFAULT: 'var(--pastle-green)',
+          hover: 'var(--pastle-green-hover)',
+          text: 'var(--pastle-green-text)'
         },
-        pastleRed: {
-          DEFAULT: '#fbd5d5',
-          hover: '#e2c0c0',
-          text: '#9b1c1c'
+        'pastle-red': {
+          DEFAULT: 'var(--pastle-red)',
+          hover: 'var(--pastle-red-hover)',
+          text: 'var(--pastle-red-text)'
         },
-        pastleBlue: {
-          DEFAULT: '#e1effe',
-          hover: '#bcdefa',
-          text: '#1e429f'
+        'pastle-blue': {
+          DEFAULT: 'var(--pastle-blue)',
+          hover: 'var(--pastle-blue-hover)',
+          text: 'var(--pastle-blue-text)'
         },
-        text: '#2c2c2c',
+        text: 'var(--text)',
+        card: 'var(--card-background)',
+        border: 'var(--border-color)',
+        shadow: 'var(--shadow-color)',
+        'shadow-hover': 'var(--shadow-hover-color)'
       },
       fontFamily: {
         fredoka: ['Fredoka', 'sans-serif'],
@@ -47,8 +52,8 @@ module.exports = {
         DEFAULT: '200ms',
       },
       boxShadow: {
-        'custom': '0 2px 4px rgba(0, 0, 0, 0.1)',
-        'custom-hover': '0 4px 6px rgba(0, 0, 0, 0.15)',
+        'custom': '0 2px 4px var(--shadow-color)',
+        'custom-hover': '0 4px 6px var(--shadow-hover-color)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

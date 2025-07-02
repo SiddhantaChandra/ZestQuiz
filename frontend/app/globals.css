@@ -7,15 +7,63 @@
     --background: #F2F3F4;
     --primary: #7e80d8;
     --primary-hover: #6b6ec7;
-    --secondary: #f7d932;
-    --secondary-hover: #f5d41e;
+    --secondary: #fde047;
+    --secondary-hover: #facc15;
     --text: #2c2c2c;
     --success: #10B981;
     --success-hover: #059669;
+    --pastle-green: #bce5bc;
+    --pastle-green-hover: #a9cea9;
+    --pastle-green-text: #2d7b2d;
+    --pastle-red: #fbd5d5;
+    --pastle-red-hover: #e2c0c0;
+    --pastle-red-text: #9b1c1c;
+    --pastle-blue: #e1effe;
+    --pastle-blue-hover: #bcdefa;
+    --pastle-blue-text: #1e429f;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --shadow-hover-color: rgba(0, 0, 0, 0.15);
+    --card-background: #ffffff;
+    --border-color: #e5e7eb;
+    scroll-behavior: smooth;
+  }
+
+  .dark {
+    --background: #18181b;
+    --primary: #818cf8;
+    --primary-hover: #6366f1;
+    --secondary: #fde047;
+    --secondary-hover: #facc15;
+    --text: #f4f4f5;
+    --success: #22d3ee;
+    --success-hover: #0891b2;
+    --pastle-green: #064e3b;
+    --pastle-green-hover: #065f46;
+    --pastle-green-text: #34d399;
+    --pastle-red: #7f1d1d;
+    --pastle-red-hover: #991b1b;
+    --pastle-red-text: #fca5a5;
+    --pastle-blue: #1e3a8a;
+    --pastle-blue-hover: #1e40af;
+    --pastle-blue-text: #93c5fd;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --shadow-hover-color: rgba(0, 0, 0, 0.4);
+    --card-background: #27272a;
+    --border-color: #3f3f46;
+  }
+
+  /* Add this for better scroll performance */
+  @supports (scrollbar-gutter: stable) {
+    html {
+      scrollbar-gutter: stable;
+    }
   }
 
   body {
     @apply bg-background text-text;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -33,7 +81,7 @@
   }
 
   .btn-secondary {
-    @apply btn bg-secondary text-text hover:bg-secondary-hover border-secondary;
+    @apply btn bg-secondary text-text font-semibold hover:bg-secondary-hover border-border;
   }
 
   .btn-success {
@@ -41,19 +89,19 @@
   }
 
   .btn-white {
-    @apply btn bg-white hover:bg-background border-gray-300;
+    @apply btn bg-card text-text hover:bg-background border-border;
   }
 
   .card {
-    @apply bg-white rounded-custom-lg border border-gray-300 shadow-custom hover:shadow-custom-hover transition-all;
+    @apply bg-card rounded-custom-lg border border-border shadow-custom hover:shadow-custom-hover transition-all;
   }
 
   .input-field {
-    @apply w-full px-4 py-2 rounded-custom-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors font-fredoka;
+    @apply w-full px-4 py-2 rounded-custom-md border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors font-fredoka;
   }
 
   .avatar {
-    @apply w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center;
+    @apply w-8 h-8 rounded-full border border-border flex items-center justify-center;
   }
 }
 
@@ -72,4 +120,9 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-primary-hover;
+}
+
+/* Add smooth transition for theme changes */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
