@@ -250,10 +250,10 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     try {
       const response = await onSubmit(formData);
       if (response.success) {
-        if (isEditing) {
-          showQuizUpdatedToast();
-        } else {
-          showQuizCreatedToast();
+      if (isEditing) {
+        showQuizUpdatedToast();
+      } else {
+        showQuizCreatedToast();
         }
         router.back();
       }
@@ -265,7 +265,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
 
   const generateAiQuestion = async () => {
     try {
-      setIsGeneratingQuestion(true);
+    setIsGeneratingQuestion(true);
       const response = await api.post('/api/ai/generate-question', {
         title: formData.title,
         description: formData.description,
@@ -274,23 +274,23 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
 
       if (response.ok) {
         const data = await response.json();
-        const newQuestion = {
+      const newQuestion = {
           id: generateUniqueId('question'),
           text: data.question,
-          orderIndex: formData.questions.length,
+        orderIndex: formData.questions.length,
           options: data.options.map((optionText, i) => ({
             id: generateUniqueId('option'),
             text: optionText,
             isCorrect: i === data.correctOptionIndex,
-            orderIndex: i
-          }))
-        };
+          orderIndex: i
+        }))
+      };
 
         setFormData(prev => ({
           ...prev,
           questions: [...prev.questions, newQuestion]
         }));
-        setIsDirty(true);
+      setIsDirty(true);
       } else {
         const error = await response.json();
         throw new Error(error.message || 'Failed to generate question');
@@ -421,40 +421,40 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
                     const questionId = question.id || `temp_${index}`;
                     return (
                       <div key={`question_${questionId}`} className="space-y-4">
-                        <SortableQuestion
+                      <SortableQuestion
                           question={{ ...question, id: questionId }}
-                          questionNumber={index + 1}
+                        questionNumber={index + 1}
                           onUpdate={(updates) => updateQuestion(questionId, updates)}
                           onDelete={removeQuestion}
                           isAnyDragging={!!activeDragId}
                           isDragging={activeDragId === questionId}
-                        />
-                        
-                        {/* Show action buttons only after the last question */}
-                        {index === formData.questions.length - 1 && (
-                          <div className="flex justify-end space-x-4 mt-4">
-                            <button
-                              type="button"
-                              onClick={generateAiQuestion}
-                              disabled={isGeneratingQuestion}
-                              className={`px-4 py-2 rounded-lg font-medium ${
-                                isGeneratingQuestion
-                                  ? 'bg-purple-400 cursor-not-allowed'
-                                  : 'bg-purple-600 hover:bg-purple-700'
-                              } text-white transition-colors duration-200`}
-                            >
-                              {isGeneratingQuestion ? 'Generating...' : 'Generate AI Question'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={addQuestion}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200"
-                            >
-                              Add Question
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                      />
+                      
+                      {/* Show action buttons only after the last question */}
+                      {index === formData.questions.length - 1 && (
+                        <div className="flex justify-end space-x-4 mt-4">
+                          <button
+                            type="button"
+                            onClick={generateAiQuestion}
+                            disabled={isGeneratingQuestion}
+                            className={`px-4 py-2 rounded-lg font-medium ${
+                              isGeneratingQuestion
+                                ? 'bg-purple-400 cursor-not-allowed'
+                                : 'bg-purple-600 hover:bg-purple-700'
+                            } text-white transition-colors duration-200`}
+                          >
+                            {isGeneratingQuestion ? 'Generating...' : 'Generate AI Question'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={addQuestion}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200"
+                          >
+                            Add Question
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     );
                   })}
                 </div>
@@ -525,4 +525,4 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       )}
     </div>
   );
-}
+} 
