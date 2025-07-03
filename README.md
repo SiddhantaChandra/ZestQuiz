@@ -1,6 +1,6 @@
 # ZestQuiz
 
-**ZestQuiz** is a modern, full-stack quiz platform that enables users to take, create, and manage quizzes with a beautiful, responsive UI and advanced features like AI-powered quiz generation and real-time chat support.
+**ZestQuiz** is a modern, full-stack quiz platform that enables users to take, create, and manage quizzes with a beautiful, responsive UI and advanced features like AI-powered quiz generation and real-time chat-bot support.
 
 Live Demo: [https://zest-quiz.vercel.app/](https://zest-quiz.vercel.app/)
 
@@ -26,7 +26,7 @@ Live Demo: [https://zest-quiz.vercel.app/](https://zest-quiz.vercel.app/)
 - **Backend**: Node.js, NestJS, Prisma ORM
 - **Database**: PostgreSQL (via Prisma)
 - **Authentication**: JWT, custom guards/strategies
-- **AI Integration**: OpenAI (for quiz generation)
+- **AI Integration**: DeepseekAI (for quiz generation)
 - **Deployment**: Vercel (Frontend), Railway (Backend/DB)
 - **Other**: Docker, ESLint, Prettier
 
@@ -68,7 +68,7 @@ cd ZestQuiz
 
 ### 2. Setup Environment Variables
 
-- Copy `.env.example` to `.env` in both `frontend/` and `backend/` folders and fill in the required values (DB connection, JWT secret, OpenAI key, etc.).
+- Copy `.env.example` to `.env` in both `frontend/` and `backend/` folders and fill in the required values (DB connection, JWT secret, Deepseek API key, etc.).
 
 ---
 
@@ -131,14 +131,6 @@ npm run dev
 
 ---
 
-## Customization
-
-- **Add new quiz categories**: Edit the `tags` array in `frontend/app/page.js`
-- **AI Quiz Generation**: Configure your OpenAI API key in backend `.env`
-- **Styling**: Customize Tailwind config and global CSS in `frontend/app/globals.css`
-
----
-
 ## Contributing
 
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
@@ -154,7 +146,7 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 ## Credits
 
 - Built with [Next.js](https://nextjs.org/), [NestJS](https://nestjs.com/), [Prisma](https://www.prisma.io/), [Tailwind CSS](https://tailwindcss.com/)
-- AI features powered by [DeepseekAI](https://openai.com/)
+- AI features powered by [DeepseekAI](https://www.deepseek.com/en)
 - Live at [https://zest-quiz.vercel.app/](https://zest-quiz.vercel.app/)
 
 ---
