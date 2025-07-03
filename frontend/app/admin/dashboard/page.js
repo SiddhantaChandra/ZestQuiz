@@ -152,13 +152,13 @@ export default function AdminDashboard() {
                     <div className="flex gap-2">
                       <Link
                         href={`/admin/quizzes/${quiz.id}/edit`}
-                        className="bg-primary/10 hover:bg-primary/20 text-primary dark:text-primary-light px-3 py-1 rounded-md border border-border min-w-16 text-center transition-colors bg-green-300 text-black"
+                        className="bg-primary/10 hover:bg-primary/20 px-3 py-1 rounded-md border border-border min-w-16 text-center transition-colors bg-green-300 hover:bg-green-400 text-black"
                       >
                         Edit
                       </Link>
                       <Link
                         href={`/admin/quizzes/${quiz.id}/preview`}
-                        className="bg-secondary hover:bg-secondary-hover text-text-dark px-3 py-1 rounded-md border border-border min-w-16 text-center transition-colors text-black"
+                        className="bg-secondary hover:bg-secondary-hover px-3 py-1 rounded-md border border-border min-w-16 text-center transition-colors text-black"
                       >
                         Preview
                       </Link>

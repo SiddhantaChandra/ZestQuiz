@@ -8,7 +8,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 // Add immediate console log to verify the script is running
-console.log('=== NESTJS BACKEND STARTING ===');
+console.log('=== BACKEND STARTING ===');
 console.log('Current time:', new Date().toISOString());
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('PORT:', process.env.PORT || 3001);

@@ -53,6 +53,10 @@ export default function Home() {
   const displayedQuizzes = showAllQuizzes ? filteredQuizzes : filteredQuizzes.slice(0, 9);
 
   const handleStartQuiz = (quizId) => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
     router.push(`/quizzes/${quizId}/take`);
   };
 
@@ -165,7 +169,6 @@ export default function Home() {
                         <button 
                           className="btn-primary w-full"
                           onClick={() => handleStartQuiz(quiz.id)}
-                          disabled={!user}
                         >
                           {user ? 'Start Quiz' : 'Login to Start'}
                         </button>

@@ -175,7 +175,7 @@ export default function TakeQuizClient() {
                 onClick={() => handleOptionSelect(currentQuestion.id, option.id)}
                 className={`w-full p-4 text-left rounded-lg transition-colors ${
                   selectedAnswers[currentQuestion.id] === option.id
-                    ? 'bg-secondary text-text'
+                    ? 'bg-secondary text-black'
                     : 'bg-white text-black hover:bg-gray-50'
                 }`}
               >
@@ -194,8 +194,8 @@ export default function TakeQuizClient() {
                     index === currentQuestionIndex
                       ? 'bg-secondary'
                       : selectedAnswers[quiz.questions[index].id]
-                      ? 'bg-white'
-                      : 'bg-white/50'
+                      ? 'bg-green-200'
+                      : 'bg-white/40'
                   }`}
                 />
               ))}
@@ -204,10 +204,10 @@ export default function TakeQuizClient() {
               <button
                 onClick={handlePrevious}
                 disabled={currentQuestionIndex === 0}
-                className={`px-6 py-2 rounded-lg ${
+                className={`px-6 py-2 rounded-lg text-black ${
                   currentQuestionIndex === 0
-                    ? 'bg-gray-300 cursor-not-allowed'
-                    : 'bg-white text-text hover:bg-gray-50'
+                    ? 'bg-gray-200 cursor-not-allowed text-neutral-500'
+                    : 'bg-white hover:bg-gray-50 text-black'
                 }`}
               >
                 Previous
@@ -217,14 +217,14 @@ export default function TakeQuizClient() {
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="px-6 py-2 bg-secondary text-text rounded-lg hover:bg-[#e0c22d] disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  className="px-6 py-2 bg-secondary rounded-lg hover:bg-[#e0c22d] disabled:bg-gray-300 disabled:cursor-not-allowed text-black"
                 >
-                  {submitting ? 'Submitting...' : 'Submit Quiz'}
+                  {submitting ? 'Submitting... ⚓' : 'Submit Quiz 🥳'}
                 </button>
               ) : (
                 <button
                   onClick={handleNext}
-                  className="px-6 py-2 bg-secondary text-text rounded-lg hover:bg-[#e0c22d]"
+                  className="px-6 py-2 bg-secondary rounded-lg hover:bg-[#e0c22d] text-black"
                 >
                   Next
                 </button>
