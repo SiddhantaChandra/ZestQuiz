@@ -389,7 +389,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   const generateAiQuestion = async () => {
     try {
     setIsGeneratingQuestion(true);
-      const response = await api.post('/api/ai/generate-question', {
+      const response = await api.post('/ai/generate-question', {
         title: formData.title,
         description: formData.description,
         existingQuestions: formData.questions.map(q => q.text),

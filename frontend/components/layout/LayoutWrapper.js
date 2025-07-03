@@ -56,7 +56,7 @@ export default function LayoutWrapper({ children }) {
         {/* Page Content */}
         <main className="flex-1">
           <div className={showSidebar ? 'p-6' : 'container mx-auto px-4 py-6'}>
-            {children}
+      {children}
           </div>
         </main>
       </div>

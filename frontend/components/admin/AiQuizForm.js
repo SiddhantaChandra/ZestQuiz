@@ -25,13 +25,33 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [formData, setFormData] = useState({
     topic: '',
-    numQuestions: 5,
+    numQuestions: '',
   });
   const [error, setError] = useState('');
+
+  const validateForm = () => {
+    if (!formData.topic.trim()) {
+      showErrorToast('Please enter a quiz topic');
+      return false;
+    }
+    
+    const numQuestions = Number(formData.numQuestions);
+    if (isNaN(numQuestions) || numQuestions < 5 || numQuestions > 30) {
+      showErrorToast('Number of questions must be between 5 and 30');
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true);
 
     // Rotate loading messages every 2 seconds
@@ -44,6 +64,7 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
       onQuizGenerated(response.data);
     } catch (error) {
       setError(error.message || 'Failed to generate quiz');
+      showErrorToast(error.message || 'Failed to generate quiz');
     } finally {
       setIsLoading(false);
       clearInterval(messageInterval);
@@ -126,20 +147,24 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
 
             <div>
               <label htmlFor="numQuestions" className="block text-sm font-medium text-text dark:text-text-dark mb-2">
-                Number of Questions
+                Number of Questions (5-30)
               </label>
-              <select
-                id="numQuestions"
-                value={formData.numQuestions}
-                onChange={(e) => setFormData({ ...formData, numQuestions: Number(e.target.value) })}
-                className="w-full px-4 py-2 bg-background dark:bg-background-dark border border-border rounded-lg text-text dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-primary/30 dark:focus:ring-primary/50"
-              >
-                {questionOptions.map((num) => (
-                  <option key={num} value={num}>
-                    {num} questions
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <input
+                  type="number"
+                  id="numQuestions"
+                  value={formData.numQuestions}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({ ...formData, numQuestions: value });
+                  }}
+                  className="w-full px-4 py-2 bg-background dark:bg-background-dark border border-border rounded-lg text-text dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-primary/30 dark:focus:ring-primary/50 appearance-none"
+                  placeholder="Enter number of questions"
+                />
+              </div>
+              <p className="mt-1 text-xs text-text/70 dark:text-text-dark/70">
+                Choose between 5 and 30 questions for your quiz
+              </p>
             </div>
 
             <button
