@@ -71,7 +71,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-8 p-6 bg-background min-h-screen">
+    <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-text">Admin Dashboard</h1>
         <Link 

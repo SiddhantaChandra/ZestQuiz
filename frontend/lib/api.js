@@ -43,6 +43,7 @@ api.interceptors.response.use(
 
 // Quiz related API calls
 export const fetchQuizzes = () => api.get('/quizzes');
+export const fetchPublicQuizzes = () => api.get('/quizzes/public');
 export const fetchActiveQuizzes = () => api.get('/quizzes/active');
 
 export { api }; 

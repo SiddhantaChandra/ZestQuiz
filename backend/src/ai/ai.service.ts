@@ -65,7 +65,7 @@ export class AiService {
       );
 
       const quizResponse = this.parseAiResponse(response.data.choices[0].message.content);
-      return this.validateQuizResponse(quizResponse);
+      return this.validateQuizResponse(quizResponse, topic);
     } catch (error) {
       this.logger.error('Error generating quiz:', error);
       throw new HttpException(
@@ -310,15 +310,21 @@ Requirements:
     }
   }
 
-  private validateQuizResponse(quizResponse: AIQuizResponse): AIQuizResponse {
-    // Validate structure
+  private validateQuizResponse(quizResponse: AIQuizResponse, topic: string): AIQuizResponse {
     if (!quizResponse.quiz || !Array.isArray(quizResponse.quiz)) {
-      throw new Error('Quiz must be an array of questions');
+      throw new HttpException('Invalid quiz format', HttpStatus.BAD_REQUEST);
     }
-    if (!quizResponse.description || typeof quizResponse.description !== 'string') {
-      throw new Error('Quiz must have a description');
+
+    if (!quizResponse.description) {
+      throw new HttpException('Quiz description is required', HttpStatus.BAD_REQUEST);
     }
-    if (!quizResponse.tags || !Array.isArray(quizResponse.tags) || quizResponse.tags.length !== 4) {
+
+    if (!quizResponse.tags || !Array.isArray(quizResponse.tags)) {
+      throw new HttpException('Quiz tags are required', HttpStatus.BAD_REQUEST);
+    }
+
+    // Validate structure
+    if (quizResponse.tags.length !== 4) {
       throw new Error('Quiz must have exactly 4 tags');
     }
 
@@ -342,7 +348,11 @@ Requirements:
       }
     });
 
-    return quizResponse;
+    // Add topic to the response
+    return {
+      ...quizResponse,
+      topic: topic,
+    };
   }
 
   private generateSingleQuestionPrompt(topic: string, existingQuestions?: QuizQuestion[]): string {

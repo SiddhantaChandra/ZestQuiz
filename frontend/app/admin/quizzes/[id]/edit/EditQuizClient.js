@@ -35,11 +35,83 @@ export default function EditQuizClient() {
 
   const handleSubmit = async (formData) => {
     try {
-      await api.patch(`/quizzes/${params.id}`, formData);
+      // Basic validation
+      if (!formData.title?.trim() || formData.title.trim().length < 3) {
+        throw new Error('Quiz title must be at least 3 characters long');
+      }
+      if (!formData.description?.trim() || formData.description.trim().length < 10) {
+        throw new Error('Quiz description must be at least 10 characters long');
+      }
+      if (!Array.isArray(formData.tags) || formData.tags.length === 0) {
+        throw new Error('At least one tag is required');
+      }
+
+      // Prepare questions data
+      const questions = formData.questions.map((question, qIndex) => {
+        // Validate question
+        if (!question.text?.trim()) {
+          throw new Error(`Question ${qIndex + 1} text is required`);
+        }
+
+        // Validate options
+        if (!Array.isArray(question.options) || question.options.length !== 4) {
+          throw new Error(`Question ${qIndex + 1} must have exactly 4 options`);
+        }
+
+        const correctOptions = question.options.filter(o => o.isCorrect);
+        if (correctOptions.length !== 1) {
+          throw new Error(`Question ${qIndex + 1} must have exactly one correct answer`);
+        }
+
+        // Return only the fields needed for update
+        return {
+          id: question.id,
+          text: question.text.trim(),
+          orderIndex: qIndex,
+          options: question.options.map((option, oIndex) => {
+            const baseOption = {
+              text: option.text.trim(),
+              isCorrect: Boolean(option.isCorrect),
+              orderIndex: oIndex
+            };
+
+            // Only include id if it exists and is not empty
+            if (option.id && typeof option.id === 'string' && option.id.trim()) {
+              return { ...baseOption, id: option.id };
+            }
+            return baseOption;
+          })
+        };
+      });
+
+      // Prepare update data with only the necessary fields
+      const updateData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        tags: formData.tags.map(t => t.trim()).filter(Boolean),
+        status: formData.status || 'DRAFT',
+        questions: questions.map(question => ({
+          ...question,
+          options: question.options.map(option => ({
+            ...option,
+            // Ensure text is not empty
+            text: option.text || `Option ${option.orderIndex + 1}`
+          }))
+        }))
+      };
+
+      // Log the data being sent
+      console.log('Sending update data:', JSON.stringify(updateData, null, 2));
+
+      // Make the API call
+      await api.patch(`/quizzes/${params.id}`, updateData);
       router.push('/admin/quizzes');
     } catch (error) {
       console.error('Failed to update quiz:', error);
-      throw new Error(error.response?.data?.message || 'Failed to update quiz');
+      console.error('Error response:', error.response?.data);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update quiz';
+      showErrorToast(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 

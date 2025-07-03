@@ -44,6 +44,10 @@ export default function SortableQuestion({ question, questionNumber, onUpdate, o
     onUpdate({ options: newOptions });
   };
 
+  const handleDelete = () => {
+    setShowDeleteModal(true);
+  };
+
   return (
     <>
       <Modal
@@ -78,7 +82,7 @@ export default function SortableQuestion({ question, questionNumber, onUpdate, o
           <span className="text-text/60 dark:text-text-dark/60 flex-shrink-0">Question {questionNumber}</span>
           <button
             type="button"
-            onClick={() => setShowDeleteModal(true)}
+            onClick={handleDelete}
             className="ml-auto text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors flex-shrink-0"
           >
             Delete

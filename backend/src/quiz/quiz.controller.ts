@@ -18,8 +18,14 @@ export class QuizController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   findAll() {
     return this.quizService.findAll();
+  }
+
+  @Get('public')
+  findPublicQuizzes() {
+    return this.quizService.findPublicQuizzes();
   }
 
   @Get('active')

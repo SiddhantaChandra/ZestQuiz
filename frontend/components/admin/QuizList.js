@@ -29,14 +29,15 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
   const allTags = [...new Set(quizzes.flatMap(quiz => quiz.tags || []))].sort();
 
   // Filter quizzes based on search term, status and tags
-  const filteredQuizzes = quizzes.filter(quiz => {
-    const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredQuizzes = quizzes
+    .filter(quiz => {
+      const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          quiz.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || quiz.status === statusFilter;
-    const matchesTags = selectedTags.length === 0 || 
+      const matchesStatus = statusFilter === 'ALL' || quiz.status === statusFilter;
+      const matchesTags = selectedTags.length === 0 || 
                        (quiz.tags && selectedTags.every(tag => quiz.tags.includes(tag)));
-    return matchesSearch && matchesStatus && matchesTags;
-  });
+      return matchesSearch && matchesStatus && matchesTags;
+    });
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredQuizzes.length / itemsPerPage);

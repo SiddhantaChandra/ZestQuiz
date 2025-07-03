@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { fetchQuizzes, fetchActiveQuizzes } from '@/lib/api';
+import { fetchQuizzes, fetchActiveQuizzes, fetchPublicQuizzes } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import AnimatedHeroBanner from '@/components/common/AnimatedHeroBanner';
@@ -16,14 +16,24 @@ export default function Home() {
   const [selectedTag, setSelectedTag] = useState('All');
   const [showAllQuizzes, setShowAllQuizzes] = useState(false);
 
-  const tags = ['All', 'Art & Literature', 'Entertainment', 'Geography', 'History', 'Languages', 'Science', 'Sports', 'Trivia'];
+  const tags = [
+    { value: 'All', label: '🌟 All', emoji: '🌟' },
+    { value: 'Art & Literature', label: '🎨 Art & Literature', emoji: '🎨' },
+    { value: 'Entertainment', label: '🎬 Entertainment', emoji: '🎬' },
+    { value: 'Geography', label: '🌍 Geography', emoji: '🌍' },
+    { value: 'History', label: '📚 History', emoji: '📚' },
+    { value: 'Languages', label: '🗣️ Languages', emoji: '🗣️' },
+    { value: 'Science', label: '🔬 Science', emoji: '🔬' },
+    { value: 'Sports', label: '⚽ Sports', emoji: '⚽' },
+    { value: 'Trivia', label: '🧠 Trivia', emoji: '🧠' }
+  ];
 
   useEffect(() => {
     const loadQuizzes = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = user ? await fetchActiveQuizzes() : await fetchQuizzes();
+        const response = await fetchPublicQuizzes();
         setQuizzes(response.data);
       } catch (err) {
         setError('Failed to load quizzes. Please try again later.');
@@ -34,7 +44,7 @@ export default function Home() {
     };
 
     loadQuizzes();
-  }, [user]);
+  }, []);
 
   const filteredQuizzes = selectedTag === 'All'
     ? quizzes
@@ -50,26 +60,32 @@ export default function Home() {
     router.push(`/quizzes/${quizId}/results`);
   };
 
+  // Helper function to get tag display info
+  const getTagDisplay = (tagValue) => {
+    const tagObj = tags.find(t => t.value === tagValue);
+    return tagObj ? tagObj : { value: tagValue, label: tagValue, emoji: '' };
+  };
+
   return (
     <main className="container mx-auto px-4 py-8">
       <AnimatedHeroBanner user={user} />
 
       {/* Tag Navigation */}
-      <div className="flex space-x-4 mb-8 overflow-x-auto pb-2">
+      <div className="flex space-x-4 my-8 overflow-x-auto pb-2 text-sm">
         {tags.map((tag) => (
           <button
-            key={tag}
-            className={`px-4 py-2 rounded-full transition-colors ${
-              tag === selectedTag 
+            key={tag.value}
+            className={`px-4 py-2 rounded-full transition-colors whitespace-nowrap ${
+              tag.value === selectedTag 
                 ? 'bg-primary text-white' 
                 : 'bg-card hover:bg-background border border-border text-text'
             }`}
             onClick={() => {
-              setSelectedTag(tag);
+              setSelectedTag(tag.value);
               setShowAllQuizzes(false);
             }}
           >
-            {tag}
+            {tag.label}
           </button>
         ))}
       </div>
@@ -115,19 +131,22 @@ export default function Home() {
                   </div>
                   <div className="flex flex-col space-y-3">
                     <div className="flex gap-2">
-                      {(quiz.tags || []).slice(0, 3).map((tag) => (
-                        <button
-                          key={tag}
-                          onClick={() => setSelectedTag(tag)}
-                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors capitalize ${
-                            tag === selectedTag
-                              ? 'bg-primary text-white'
-                              : 'bg-background hover:bg-background/80 text-text'
-                          }`}
-                        >
-                          {tag}
-                        </button>
-                      ))}
+                      {(quiz.tags || []).slice(0, 3).map((tagValue) => {
+                        const tagDisplay = getTagDisplay(tagValue);
+                        return (
+                          <button
+                            key={tagValue}
+                            onClick={() => setSelectedTag(tagValue)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors capitalize ${
+                              tagValue === selectedTag
+                                ? 'bg-primary text-white'
+                                : 'bg-background hover:bg-background/80 text-text'
+                            }`}
+                          >
+                            {tagDisplay.emoji} {tagValue}
+                          </button>
+                        );
+                      })}
                     </div>
                     <div className="flex justify-between items-center">
                       {user && quiz.userAttempt ? (

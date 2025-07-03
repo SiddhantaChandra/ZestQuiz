@@ -1,17 +1,43 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import SortableQuestion from './SortableQuestion';
-import Modal from '@/components/common/Modal';
-import { useRouter } from 'next/navigation';
-import ToggleAiButton from './ToggleAiButton';
 import AiQuizForm from './AiQuizForm';
-import { showWarningToast, showErrorToast, showQuizCreatedToast, showQuizUpdatedToast } from '@/lib/toast';
+import ToggleAiButton from './ToggleAiButton';
+import Modal from '../common/Modal';
+import { 
+  showSuccessToast, 
+  showErrorToast, 
+  showWarningToast, 
+  showQuizCreatedToast, 
+  showQuizUpdatedToast 
+} from '@/lib/toast';
+import { Lightning, Plus, FloppyDisk } from '@phosphor-icons/react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
-const generateUniqueId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+// Generate proper UUID v4
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   const router = useRouter();
@@ -30,7 +56,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   const [isDirty, setIsDirty] = useState(false);
   const [activeDragId, setActiveDragId] = useState(null);
   const [showExitModal, setShowExitModal] = useState(false);
-  const [questionToDelete, setQuestionToDelete] = useState(null);
   const [showAiConfirmModal, setShowAiConfirmModal] = useState(false);
   const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false);
 
@@ -38,6 +63,9 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: null
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
@@ -48,10 +76,10 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         ...prev,
         questions: prev.questions.map(question => ({
           ...question,
-          id: question.id || generateUniqueId('question'),
+          id: question.id || generateUUID(),
           options: question.options.map(option => ({
             ...option,
-            id: option.id || generateUniqueId('option')
+            id: option.id || generateUUID()
           }))
         }))
       }));
@@ -59,15 +87,52 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   }, [formData.questions]);
 
   const handleToggleAi = () => {
-    if (isDirty) {
+    // Check if there's actual data before showing the warning
+    const hasData = formData.title.trim() !== '' || 
+                   formData.description.trim() !== '' || 
+                   formData.tags.length > 0 || 
+                   formData.questions.some(q => q.text.trim() !== '' || 
+                     q.options.some(o => o.text.trim() !== ''));
+
+    if (isDirty && hasData) {
       setShowAiConfirmModal(true);
     } else {
       setIsAiMode(!isAiMode);
+      // Reset form data when switching modes if no real data exists
+      if (!hasData) {
+        setFormData({
+          title: '',
+          description: '',
+          tags: [],
+          status: 'DRAFT',
+          questions: [],
+        });
+        setIsDirty(false);
+      }
     }
   };
 
   const handleAiQuizGenerated = (aiQuizData) => {
-    setFormData(aiQuizData);
+    // Transform AI response to match form data structure
+    const transformedData = {
+      title: aiQuizData.title || `Quiz about ${aiQuizData.topic}`, // Use AI title with fallback
+      description: aiQuizData.description || '',
+      tags: aiQuizData.tags || [],
+      status: 'DRAFT',
+      questions: (aiQuizData.quiz || []).map((question, index) => ({
+        id: generateUUID(),
+        text: question.question,
+        orderIndex: index,
+        options: question.options.map((option, optIndex) => ({
+          id: generateUUID(),
+          text: option.text,
+          isCorrect: option.isCorrect,
+          orderIndex: optIndex
+        }))
+      }))
+    };
+    
+    setFormData(transformedData);
     setIsAiMode(false);
     setIsDirty(true);
   };
@@ -105,20 +170,32 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   // Handle question operations
   const addQuestion = useCallback(() => {
     const newQuestion = {
-      id: generateUniqueId('question'),
+      id: generateUUID(),
       text: '',
       orderIndex: formData.questions.length,
       options: Array(4).fill(null).map((_, i) => ({
-        id: generateUniqueId('option'),
+        id: generateUUID(),
         text: '',
-        isCorrect: i === 0,
+        isCorrect: i === 0, // First option is correct by default
         orderIndex: i
       }))
     };
 
+    // Ensure proper data structure when adding to formData
     setFormData(prev => ({
       ...prev,
-      questions: [...prev.questions, newQuestion]
+      questions: [
+        ...prev.questions,
+        {
+          ...newQuestion,
+          options: newQuestion.options.map((option, index) => ({
+            id: option.id,
+            text: option.text || '',
+            isCorrect: Boolean(option.isCorrect),
+            orderIndex: option.orderIndex ?? index
+          }))
+        }
+      ]
     }));
     setIsDirty(true);
   }, [formData.questions.length]);
@@ -126,25 +203,37 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   const updateQuestion = (questionId, updates) => {
     setFormData(prev => ({
       ...prev,
-      questions: prev.questions.map(q =>
-        q.id === questionId ? { ...q, ...updates } : q
-      )
+      questions: prev.questions.map(q => {
+        if (q.id !== questionId) return q;
+        
+        // If we're updating options, ensure proper structure
+        if (updates.options) {
+          return {
+            ...q,
+            ...updates,
+            options: updates.options.map((option, index) => ({
+              id: option.id || generateUUID(),
+              text: option.text || '',
+              isCorrect: Boolean(option.isCorrect),
+              orderIndex: option.orderIndex ?? index
+            }))
+          };
+        }
+        
+        // For other updates
+        return { ...q, ...updates };
+      })
     }));
     setIsDirty(true);
   };
 
   const removeQuestion = (questionId) => {
-    setQuestionToDelete(questionId);
-  };
-
-  const handleConfirmQuestionDelete = () => {
     setFormData(prev => ({
       ...prev,
-      questions: prev.questions.filter(q => q.id !== questionToDelete)
+      questions: prev.questions.filter(q => q.id !== questionId)
         .map((q, idx) => ({ ...q, orderIndex: idx }))
     }));
     setIsDirty(true);
-    setQuestionToDelete(null);
   };
 
   const handleExit = () => {
@@ -248,18 +337,52 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     }
 
     try {
-      const response = await onSubmit(formData);
-      if (response.success) {
+      // Ensure questions are properly structured
+      const cleanedQuestions = formData.questions.map((question, qIndex) => {
+        // Clean options
+        const cleanedOptions = question.options.map((option, oIndex) => ({
+          id: option.id,
+          text: (option.text || '').trim(),
+          isCorrect: Boolean(option.isCorrect),
+          orderIndex: oIndex
+        }));
+
+        // Ensure one correct answer
+        const hasCorrect = cleanedOptions.some(opt => opt.isCorrect);
+        if (!hasCorrect) {
+          cleanedOptions[0].isCorrect = true;
+        }
+
+        return {
+          id: question.id,
+          text: (question.text || '').trim(),
+          orderIndex: qIndex,
+          options: cleanedOptions
+        };
+      });
+
+      const cleanedData = {
+        ...formData,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        tags: formData.tags.map(t => t.trim()).filter(Boolean),
+        questions: cleanedQuestions,
+        status: formData.status || 'DRAFT'
+      };
+
+      await onSubmit(cleanedData);
+      setIsDirty(false);
       if (isEditing) {
         showQuizUpdatedToast();
       } else {
         showQuizCreatedToast();
-        }
-        router.back();
       }
+      router.back();
     } catch (error) {
-      showErrorToast(error.message || 'Failed to save quiz');
-      setError(error.message || 'Failed to save quiz');
+      console.error('Submit error:', error);
+      const errorMessage = error.message || 'Failed to save quiz';
+      showErrorToast(errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -275,11 +398,11 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       if (response.ok) {
         const data = await response.json();
       const newQuestion = {
-          id: generateUniqueId('question'),
+          id: generateUUID(),
           text: data.question,
         orderIndex: formData.questions.length,
           options: data.options.map((optionText, i) => ({
-            id: generateUniqueId('option'),
+            id: generateUUID(),
             text: optionText,
             isCorrect: i === data.correctOptionIndex,
           orderIndex: i
@@ -317,10 +440,10 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
 
   // Add question if none exist and not in AI mode
   useEffect(() => {
-    if (!isAiMode && formData.questions.length === 0) {
+    if (!isAiMode && formData.questions && formData.questions.length === 0) {
       addQuestion();
     }
-  }, [isAiMode, addQuestion, formData.questions.length]);
+  }, [isAiMode, addQuestion, formData.questions?.length]);
 
   return (
     <div>
@@ -330,16 +453,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         </div>
       )}
 
-      {/* Delete Question Modal */}
-      <Modal
-        isOpen={questionToDelete !== null}
-        onClose={() => setQuestionToDelete(null)}
-        onConfirm={handleConfirmQuestionDelete}
-        title="Delete Question"
-        message="Are you sure you want to delete this question? This action cannot be undone."
-        confirmText="Delete Question"
-        isDestructive={true}
-      />
+
 
       {/* Exit Confirmation Modal */}
       <Modal
@@ -374,21 +488,9 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
             <h1 className="text-3xl font-bold text-text dark:text-text-dark">
               {isEditing ? 'Edit Quiz' : 'Create Quiz'}
             </h1>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={handleExit}
-                className="px-4 py-2 bg-card dark:bg-card-dark hover:bg-background dark:hover:bg-background-dark text-text dark:text-text-dark border border-border rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="bg-primary hover:bg-primary-hover text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                Save Quiz
-              </button>
-            </div>
+            {!isEditing && (
+              <ToggleAiButton isAiMode={false} onToggle={handleToggleAi} />
+            )}
           </div>
 
           <div className="grid gap-6">
@@ -469,7 +571,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full px-4 py-2 bg-card dark:bg-card-dark border border-border rounded-lg text-text dark:text-text-dark"
+                className="w-full px-4 py-2 bg-background dark:bg-background-dark border border-border rounded-lg text-text dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-primary/30 dark:focus:ring-primary/50"
               >
                 <option value="DRAFT">Draft</option>
                 <option value="ACTIVE">Active</option>
@@ -481,23 +583,13 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-text dark:text-text-dark">Questions</h2>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={generateAiQuestion}
-                    disabled={isGeneratingQuestion}
-                    className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {isGeneratingQuestion ? 'Generating...' : 'Generate AI Question'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={addQuestion}
-                    className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg transition-colors"
-                  >
-                    Add Question
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2"
+                >
+                  <FloppyDisk size={18} weight="bold" />
+                  Save Quiz
+                </button>
               </div>
 
               <DndContext
@@ -507,23 +599,55 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={formData.questions.map(q => q.id)}
+                  items={formData.questions?.map(q => q.id) || []}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="space-y-4">
-                    {formData.questions.map((question, index) => (
+                  <div className="space-y-6">
+                    {formData.questions?.map((question) => (
                       <SortableQuestion
                         key={question.id}
                         question={question}
-                        questionNumber={index + 1}
-                        onUpdate={updateQuestion}
+                        onUpdate={(updates) => updateQuestion(question.id, updates)}
                         onDelete={removeQuestion}
                         isDragging={activeDragId === question.id}
+                        questionNumber={formData.questions.indexOf(question) + 1}
                       />
                     ))}
                   </div>
                 </SortableContext>
               </DndContext>
+
+              {/* Action Buttons Below Questions */}
+              <div className="flex gap-2 mt-6">
+                <button
+                  type="button"
+                  onClick={generateAiQuestion}
+                  disabled={isGeneratingQuestion}
+                  className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:transform-none disabled:shadow-none"
+                >
+                  <Lightning size={18} weight="bold" />
+                  {isGeneratingQuestion ? 'Generating...' : 'Generate AI Question'}
+                </button>
+                <button
+                  type="button"
+                  onClick={addQuestion}
+                  className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  <Plus size={18} weight="bold" />
+                  Add Question
+                </button>
+              </div>
+
+              {/* Footer Save Button */}
+              <div className="mt-8 pt-6 border-t border-border">
+                                  <button
+                    type="submit"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                  >
+                    <FloppyDisk size={20} weight="bold" />
+                    Save Quiz
+                  </button>
+              </div>
             </div>
           </div>
         </form>

@@ -15,6 +15,7 @@ export interface AIQuizResponse {
   quiz: QuizQuestion[];
   description: string;
   tags: string[];
+  topic: string;
 }
 
 export interface GenerateQuizDto {

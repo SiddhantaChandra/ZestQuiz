@@ -40,8 +40,9 @@ module.exports = {
         'shadow-hover': 'var(--shadow-hover-color)'
       },
       fontFamily: {
-        fredoka: ['Fredoka', 'sans-serif'],
-        nunito: ['Nunito', 'sans-serif'],
+        fredoka: ['var(--font-fredoka)', 'system-ui', 'sans-serif'],
+        nunito: ['var(--font-nunito)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         'custom-sm': '4px',
@@ -65,5 +66,24 @@ module.exports = {
   plugins: [
     require('@tailwindcss/line-clamp'),
     require('@tailwindcss/typography'),
+    function({ addBase, theme }) {
+      addBase({
+        'body': {
+          fontFamily: theme('fontFamily.fredoka'),
+        },
+        'h1, h2, h3, h4, h5, h6': {
+          fontFamily: theme('fontFamily.nunito'),
+        },
+        '.btn, button': {
+          fontFamily: theme('fontFamily.nunito'),
+        },
+        'select, input, textarea': {
+          fontFamily: theme('fontFamily.fredoka'),
+        },
+        'select option': {
+          fontFamily: theme('fontFamily.fredoka'),
+        },
+      });
+    },
   ],
 } 

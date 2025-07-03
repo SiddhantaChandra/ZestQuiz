@@ -57,6 +57,27 @@ export class QuizService {
 
   async findAll() {
     return this.prisma.quiz.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        questions: {
+          include: {
+            options: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findPublicQuizzes() {
+    return this.prisma.quiz.findMany({
+      where: {
+        status: 'ACTIVE',
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
       include: {
         questions: {
           include: {
@@ -109,33 +130,66 @@ export class QuizService {
           // Process each question
           for (const question of questions) {
             if (question.id) {
-              // Update existing question
-              await prisma.question.update({
+              // Get existing question with options
+              const existingQuestion = await prisma.question.findUnique({
                 where: { id: question.id },
-                data: {
-                  text: question.text,
-                  orderIndex: question.orderIndex,
-                  options: {
-                    upsert: question.options.map(option => ({
-                      where: {
-                        id: option.id || 'new', // Use 'new' for new options
-                      },
-                      create: {
-                        text: option.text,
-                        isCorrect: option.isCorrect,
-                        orderIndex: option.orderIndex,
-                      },
-                      update: {
-                        text: option.text,
-                        isCorrect: option.isCorrect,
-                        orderIndex: option.orderIndex,
-                      },
-                    })),
-                  },
-                },
+                include: { options: true }
               });
+
+              if (existingQuestion) {
+                // Update existing question
+                await prisma.question.update({
+                  where: { id: question.id },
+                  data: {
+                    text: question.text,
+                    orderIndex: question.orderIndex,
+                  },
+                });
+
+                // Handle options separately
+                const existingOptionIds = existingQuestion.options.map(o => o.id);
+                
+                // Update or create options
+                for (const option of question.options) {
+                  if (option.id && existingOptionIds.includes(option.id)) {
+                    // Update existing option
+                    await prisma.option.update({
+                      where: { id: option.id },
+                      data: {
+                        text: option.text,
+                        isCorrect: option.isCorrect,
+                        orderIndex: option.orderIndex,
+                      },
+                    });
+                  } else {
+                    // Create new option
+                    await prisma.option.create({
+                      data: {
+                        text: option.text,
+                        isCorrect: option.isCorrect,
+                        orderIndex: option.orderIndex,
+                        questionId: question.id,
+                      },
+                    });
+                  }
+                }
+
+                // Delete options that are no longer present
+                const updatedOptionIds = question.options
+                  .filter(o => o.id)
+                  .map(o => o.id);
+                
+                await prisma.option.deleteMany({
+                  where: {
+                    id: {
+                      in: existingOptionIds.filter(id => !updatedOptionIds.includes(id)),
+                    },
+                    questionId: question.id,
+                  },
+                });
+              }
             } else {
-              // Create new question
+              // Create new question with options
               await prisma.question.create({
                 data: {
                   text: question.text,
@@ -158,15 +212,13 @@ export class QuizService {
             .filter(q => q.id)
             .map(q => q.id);
           
-          const questionsToDelete = existingQuestionIds
-            .filter(id => !updatedQuestionIds.includes(id));
-
-          if (questionsToDelete.length > 0) {
+          if (existingQuestionIds.length > 0) {
             await prisma.question.deleteMany({
               where: {
                 id: {
-                  in: questionsToDelete,
+                  in: existingQuestionIds.filter(id => !updatedQuestionIds.includes(id)),
                 },
+                quizId: id,
               },
             });
           }
@@ -188,10 +240,17 @@ export class QuizService {
         });
       });
     } catch (error) {
+      console.error('Quiz update error:', error);
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new BadRequestException('Failed to update quiz');
+      if (error.code === 'P2002') {
+        throw new BadRequestException('Duplicate entry found');
+      }
+      if (error.code === 'P2025') {
+        throw new NotFoundException('Quiz or related record not found');
+      }
+      throw new BadRequestException(`Failed to update quiz: ${error.message}`);
     }
   }
 

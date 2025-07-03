@@ -44,7 +44,7 @@ export default function QuizListPage() {
   }
 
   return (
-    <div className="p-6 bg-background dark:bg-background-dark min-h-screen">
+    <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-text dark:text-text-dark">Manage Quizzes</h1>
         <a

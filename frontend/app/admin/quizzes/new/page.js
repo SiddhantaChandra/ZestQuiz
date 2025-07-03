@@ -9,9 +9,17 @@ export default function CreateQuizPage() {
 
   const handleSubmit = async (formData) => {
     try {
-      await api.post('/quizzes', formData);
+      console.log('Sending data to backend:', JSON.stringify(formData, null, 2));
+      const response = await api.post('/quizzes', formData);
+      console.log('Backend response:', response.data);
       router.push('/admin/quizzes');
     } catch (error) {
+      console.error('Backend error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
       throw new Error(error.response?.data?.message || 'Failed to create quiz');
     }
   };

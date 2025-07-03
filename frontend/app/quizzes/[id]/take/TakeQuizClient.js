@@ -157,7 +157,7 @@ export default function TakeQuizClient() {
         <div className="w-full max-w-3xl">
           {/* Timer Tablet */}
           <div className="max-w-md mx-auto mb-8">
-            <div className="bg-secondary text-text py-3 px-6 rounded-lg text-center font-bold text-xl">
+            <div className="bg-secondary text-neutral-900 py-3 px-6 rounded-lg text-center font-bold text-xl">
               Timer: {formatTime(elapsedTime)}
             </div>
           </div>
@@ -168,7 +168,7 @@ export default function TakeQuizClient() {
           </h2>
 
           {/* Answer Options */}
-          <div className="space-y-4 mb-12">
+          <div className="space-y-4 mb-12 ">
             {currentQuestion.options.map((option) => (
               <button
                 key={option.id}
@@ -176,7 +176,7 @@ export default function TakeQuizClient() {
                 className={`w-full p-4 text-left rounded-lg transition-colors ${
                   selectedAnswers[currentQuestion.id] === option.id
                     ? 'bg-secondary text-text'
-                    : 'bg-white text-text hover:bg-gray-50'
+                    : 'bg-white text-black hover:bg-gray-50'
                 }`}
               >
                 {option.text}

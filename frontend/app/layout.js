@@ -1,26 +1,19 @@
-import { Fredoka, Nunito } from 'next/font/google';
 import './globals.css';
-import LayoutWrapper from '@/components/layout/LayoutWrapper';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { ChatProvider } from '@/contexts/ChatContext';
-import { ThemeProvider } from '@/contexts/ThemeContext';
+import ClientLayout from './ClientLayout';
+import { Fredoka, Nunito } from 'next/font/google';
 
+// Load Fredoka font
 const fredoka = Fredoka({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-fredoka',
-  preload: true,
-  fallback: ['system-ui', 'arial'],
-  adjustFontFallback: true,
 });
 
+// Load Nunito font
 const nunito = Nunito({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-nunito',
-  preload: true,
-  fallback: ['system-ui', 'arial'],
-  adjustFontFallback: true,
 });
 
 export const metadata = {
@@ -28,28 +21,30 @@ export const metadata = {
   description: 'Engage in fun and interactive quizzes with ZestQuiz',
   icons: {
     icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
   },
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${fredoka.variable} ${nunito.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${fredoka.variable} ${nunito.variable}`}>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const savedTheme = localStorage.getItem('theme');
+                  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+                  document.documentElement.classList.toggle('dark', theme === 'dark');
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
-      <body className="min-h-screen bg-background font-fredoka text-text">
-        <ThemeProvider>
-          <AuthProvider>
-            <ChatProvider>
-              <LayoutWrapper>
-                {children}
-              </LayoutWrapper>
-            </ChatProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </body>
+      <ClientLayout>{children}</ClientLayout>
     </html>
   );
 }
