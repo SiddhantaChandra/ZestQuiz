@@ -137,12 +137,12 @@ export class QuizService {
               });
 
               if (existingQuestion) {
-                // Update existing question
-                await prisma.question.update({
-                  where: { id: question.id },
-                  data: {
-                    text: question.text,
-                    orderIndex: question.orderIndex,
+              // Update existing question
+              await prisma.question.update({
+                where: { id: question.id },
+                data: {
+                  text: question.text,
+                  orderIndex: question.orderIndex,
                   },
                 });
 
@@ -183,10 +183,10 @@ export class QuizService {
                   where: {
                     id: {
                       in: existingOptionIds.filter(id => !updatedOptionIds.includes(id)),
-                    },
-                    questionId: question.id,
                   },
-                });
+                    questionId: question.id,
+                },
+              });
               }
             } else {
               // Create new question with options

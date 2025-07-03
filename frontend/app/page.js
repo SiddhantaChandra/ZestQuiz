@@ -33,7 +33,7 @@ export default function Home() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetchPublicQuizzes();
+        const response = user ? await fetchActiveQuizzes() : await fetchPublicQuizzes();
         setQuizzes(response.data);
       } catch (err) {
         setError('Failed to load quizzes. Please try again later.');
@@ -44,7 +44,7 @@ export default function Home() {
     };
 
     loadQuizzes();
-  }, []);
+  }, [user]);
 
   const filteredQuizzes = selectedTag === 'All'
     ? quizzes
@@ -134,17 +134,17 @@ export default function Home() {
                       {(quiz.tags || []).slice(0, 3).map((tagValue) => {
                         const tagDisplay = getTagDisplay(tagValue);
                         return (
-                          <button
+                        <button
                             key={tagValue}
                             onClick={() => setSelectedTag(tagValue)}
                             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors capitalize ${
                               tagValue === selectedTag
-                                ? 'bg-primary text-white'
+                              ? 'bg-primary text-white'
                                 : 'bg-background hover:bg-background/80 text-text'
-                            }`}
-                          >
+                          }`}
+                        >
                             {tagDisplay.emoji} {tagValue}
-                          </button>
+                        </button>
                         );
                       })}
                     </div>

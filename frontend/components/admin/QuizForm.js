@@ -86,6 +86,10 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     }
   }, [formData.questions]);
 
+  useEffect(() => {
+    setQuestionOrder(formData.questions.map(q => q.id));
+  }, [formData.questions]);
+
   const handleToggleAi = () => {
     // Check if there's actual data before showing the warning
     const hasData = formData.title.trim() !== '' || 
@@ -459,7 +463,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     if (!isAiMode && formData.questions && formData.questions.length === 0) {
       addQuestion();
     }
-  }, [isAiMode, addQuestion, formData.questions?.length]);
+  }, [isAiMode, addQuestion, formData.questions]);
 
   return (
     <div>

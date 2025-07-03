@@ -8,19 +8,19 @@ import {
   PlusCircleIcon
 } from '@phosphor-icons/react';
 
-const navItems = [
-  {
-    href: '/admin/dashboard',
+  const navItems = [
+    {
+      href: '/admin/dashboard',
     label: 'Dashboard',
     icon: ChartPieSliceIcon,
-  },
-  {
-    href: '/admin/quizzes',
+    },
+    {
+      href: '/admin/quizzes',
     label: 'Manage Quizzes',
     icon: StackIcon,
-  },
-  {
-    href: '/admin/quizzes/new',
+    },
+    {
+      href: '/admin/quizzes/new',
     label: 'Create Quiz',
     icon: PlusCircleIcon,
   },
@@ -41,7 +41,7 @@ export default function Sidebar() {
           return (
             <Link
               key={item.href}
-              href={item.href}
+                href={item.href}
               className={`flex items-center space-x-3 px-4 py-3 rounded-md font-medium transition-colors duration-75 ${
                 isActive
                   ? 'bg-primary/10 text-primary dark:text-primary-light'
@@ -54,7 +54,7 @@ export default function Sidebar() {
                 className="flex-shrink-0"
               />
               <span className="text-base">{item.label}</span>
-            </Link>
+              </Link>
           );
         })}
       </nav>

@@ -31,13 +31,13 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
   // Filter quizzes based on search term, status and tags
   const filteredQuizzes = quizzes
     .filter(quiz => {
-      const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          quiz.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'ALL' || quiz.status === statusFilter;
-      const matchesTags = selectedTags.length === 0 || 
+    const matchesStatus = statusFilter === 'ALL' || quiz.status === statusFilter;
+    const matchesTags = selectedTags.length === 0 || 
                        (quiz.tags && selectedTags.every(tag => quiz.tags.includes(tag)));
-      return matchesSearch && matchesStatus && matchesTags;
-    });
+    return matchesSearch && matchesStatus && matchesTags;
+  });
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredQuizzes.length / itemsPerPage);
@@ -252,24 +252,24 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
           </tbody>
         </table>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
+      {/* Pagination */}
+      {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 p-4 border-t border-border">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
                 className={`px-3 py-1 rounded-md transition-colors ${
-                  currentPage === page
-                    ? 'bg-primary text-white'
+                currentPage === page
+                  ? 'bg-primary text-white'
                     : 'bg-background dark:bg-background-dark text-text dark:text-text-dark hover:bg-background-dark/50'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-          </div>
-        )}
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+        </div>
+      )}
       </div>
     </div>
   );

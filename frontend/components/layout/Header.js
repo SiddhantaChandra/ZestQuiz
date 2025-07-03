@@ -173,8 +173,8 @@ function UserMenu({ user, logout, isAdminRoute, isDropdownOpen, setIsDropdownOpe
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         className="flex items-center space-x-2 focus:outline-none group"
       >
-        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center border border-border group-hover:border-primary transition-colors">
-          <span className="text-text-dark text-lg font-medium">
+        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center border border-border group-hover:border-primary transition-colors text-black">
+          <span className="text-lg font-medium text-black">
             {user.email[0].toUpperCase()}
           </span>
         </div>

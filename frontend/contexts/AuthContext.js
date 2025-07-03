@@ -82,7 +82,7 @@ export function AuthProvider({ children }) {
       if (user.role === 'ADMIN') {
         router.push('/admin/dashboard');
       } else {
-        router.push('/quizzes');
+        router.push('/');
       }
     } catch (error) {
       throw error;

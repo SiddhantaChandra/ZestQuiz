@@ -123,7 +123,7 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
             <div className="max-w-md text-center px-4">
               <p className="text-sm text-text/70 dark:text-text-dark/70">
                 Did you know? Our AI can generate questions on virtually any topic! 
-                From quantum physics to cooking tips, we've got you covered! 🎉
+                From quantum physics to cooking tips, we&apos;ve got you covered! 🎉
               </p>
             </div>
           </div>
@@ -182,6 +182,10 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
             )}
           </form>
         )}
+      </div>
+
+      <div className="text-sm text-gray-500 dark:text-gray-400">
+        Don&apos;t worry about formatting, our AI will handle that!
       </div>
     </div>
   );
