@@ -388,38 +388,54 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
 
   const generateAiQuestion = async () => {
     try {
-    setIsGeneratingQuestion(true);
+      setIsGeneratingQuestion(true);
       const response = await api.post('/ai/generate-question', {
-        title: formData.title,
-        description: formData.description,
-        existingQuestions: formData.questions.map(q => q.text),
+        topic: formData.title, // Use title as the topic
+        existingQuestions: formData.questions.map(q => ({
+          question: q.text, // Changed from text to question
+          options: q.options.map(opt => ({
+            text: opt.text,
+            isCorrect: opt.isCorrect
+          }))
+        }))
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      // Validate the response
+      if (!response.data?.question?.question || !Array.isArray(response.data?.question?.options)) {
+        throw new Error('Invalid question format received from AI');
+      }
+
+      if (response.data.question.options.length < 2) {
+        throw new Error('AI generated question must have at least 2 options');
+      }
+
+      if (!response.data.question.options.some(opt => opt.isCorrect)) {
+        throw new Error('AI generated question must have at least one correct answer');
+      }
+
       const newQuestion = {
-          id: generateUUID(),
-          text: data.question,
+        id: generateUUID(),
+        text: response.data.question.question, // Changed from text to question
         orderIndex: formData.questions.length,
-          options: data.options.map((optionText, i) => ({
-            id: generateUUID(),
-            text: optionText,
-            isCorrect: i === data.correctOptionIndex,
+        options: response.data.question.options.map((option, i) => ({
+          id: generateUUID(),
+          text: option.text,
+          isCorrect: option.isCorrect,
           orderIndex: i
         }))
       };
 
-        setFormData(prev => ({
-          ...prev,
-          questions: [...prev.questions, newQuestion]
-        }));
+      setFormData(prev => ({
+        ...prev,
+        questions: [...prev.questions, newQuestion]
+      }));
       setIsDirty(true);
-      } else {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to generate question');
-      }
+      showSuccessToast('Question generated successfully');
     } catch (error) {
-      showErrorToast(error.message || 'Failed to generate question');
+      console.error('Generate question error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to generate question';
+      showErrorToast(errorMessage);
+      setError(errorMessage);
     } finally {
       setIsGeneratingQuestion(false);
     }
@@ -452,8 +468,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
           {error}
         </div>
       )}
-
-
 
       {/* Exit Confirmation Modal */}
       <Modal
@@ -640,13 +654,13 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
 
               {/* Footer Save Button */}
               <div className="mt-8 pt-6 border-t border-border">
-                                  <button
-                    type="submit"
-                    className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2"
-                  >
-                    <FloppyDisk size={20} weight="bold" />
-                    Save Quiz
-                  </button>
+                <button
+                  type="submit"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                >
+                  <FloppyDisk size={20} weight="bold" />
+                  Save Quiz
+                </button>
               </div>
             </div>
           </div>

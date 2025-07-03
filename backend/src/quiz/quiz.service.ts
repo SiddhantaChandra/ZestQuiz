@@ -129,7 +129,7 @@ export class QuizService {
           
           // Process each question
           for (const question of questions) {
-            if (question.id) {
+            if (question.id && existingQuestionIds.includes(question.id)) {
               // Get existing question with options
               const existingQuestion = await prisma.question.findUnique({
                 where: { id: question.id },
@@ -209,7 +209,7 @@ export class QuizService {
 
           // Delete questions that are no longer in the update
           const updatedQuestionIds = questions
-            .filter(q => q.id)
+            .filter(q => q.id && existingQuestionIds.includes(q.id))
             .map(q => q.id);
           
           if (existingQuestionIds.length > 0) {
@@ -248,9 +248,9 @@ export class QuizService {
         throw new BadRequestException('Duplicate entry found');
       }
       if (error.code === 'P2025') {
-        throw new NotFoundException('Quiz or related record not found');
+        throw new NotFoundException(`Quiz with ID ${id} not found`);
       }
-      throw new BadRequestException(`Failed to update quiz: ${error.message}`);
+      throw error;
     }
   }
 

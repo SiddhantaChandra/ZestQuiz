@@ -54,8 +54,8 @@ export default function EditQuizClient() {
         }
 
         // Validate options
-        if (!Array.isArray(question.options) || question.options.length !== 4) {
-          throw new Error(`Question ${qIndex + 1} must have exactly 4 options`);
+        if (!Array.isArray(question.options) || question.options.length < 2) {
+          throw new Error(`Question ${qIndex + 1} must have at least 2 options`);
         }
 
         const correctOptions = question.options.filter(o => o.isCorrect);
