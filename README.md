@@ -1,3 +1,5 @@
+<p align="center"><a href="https://laravel.com](https://zest-quiz.vercel.app/" target="_blank"><img src="https://raw.githubusercontent.com/SiddhantaChandra/ZestQuiz/refs/heads/main/frontend/public/ZestQuizLogo.webp" width="400" alt="ZestQuiz Logo"></a></p>
+
 # ZestQuiz
 
 **ZestQuiz** is a modern, full-stack quiz platform that enables users to take, create, and manage quizzes with a beautiful, responsive UI and advanced features like AI-powered quiz generation and real-time chat-bot support.
