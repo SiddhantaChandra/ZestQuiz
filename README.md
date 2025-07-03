@@ -1,4 +1,4 @@
-<p align="center"><a href="https://laravel.com](https://zest-quiz.vercel.app/" target="_blank"><img src="https://raw.githubusercontent.com/SiddhantaChandra/ZestQuiz/refs/heads/main/frontend/public/ZestQuizLogo.webp" width="400" alt="ZestQuiz Logo"></a></p>
+<p align="center"><a href="https://zest-quiz.vercel.app/" target="_blank"><img src="https://raw.githubusercontent.com/SiddhantaChandra/ZestQuiz/refs/heads/main/frontend/public/ZestQuizLogo.webp" width="400" alt="ZestQuiz Logo"></a></p>
 
 # ZestQuiz
 
