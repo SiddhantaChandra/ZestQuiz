@@ -58,6 +58,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   const [showExitModal, setShowExitModal] = useState(false);
   const [showAiConfirmModal, setShowAiConfirmModal] = useState(false);
   const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false);
+  const [questionOrder, setQuestionOrder] = useState([]);
 
   // DnD sensors with modified settings for smoother dragging
   const sensors = useSensors(
@@ -86,9 +87,39 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     }
   }, [formData.questions]);
 
+  // Update question order when questions change
   useEffect(() => {
-    setQuestionOrder(formData.questions.map(q => q.id));
+    const newOrder = formData.questions.map(q => q.id);
+    setQuestionOrder(newOrder);
   }, [formData.questions]);
+
+  // Handle drag end for question reordering
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    
+    if (active.id !== over.id) {
+      const oldIndex = questionOrder.indexOf(active.id);
+      const newIndex = questionOrder.indexOf(over.id);
+      
+      const newOrder = arrayMove(questionOrder, oldIndex, newIndex);
+      setQuestionOrder(newOrder);
+      
+      // Update questions array with new order
+      const reorderedQuestions = newOrder.map(id => 
+        formData.questions.find(q => q.id === id)
+      );
+      
+      setFormData(prev => ({
+        ...prev,
+        questions: reorderedQuestions.map((q, index) => ({
+          ...q,
+          orderIndex: index
+        }))
+      }));
+      setIsDirty(true);
+    }
+    setActiveDragId(null);
+  };
 
   const handleToggleAi = () => {
     // Check if there's actual data before showing the warning
@@ -254,25 +285,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     setActiveDragId(active.id);
     // Prevent horizontal scrolling during drag
     document.body.style.overflowX = 'hidden';
-  };
-
-  // Handle drag end
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    setActiveDragId(null);
-    // Restore scrolling
-    document.body.style.overflowX = '';
-    
-    if (active && over && active.id !== over.id) {
-      setFormData(prev => {
-        const oldIndex = prev.questions.findIndex(q => q.id === active.id);
-        const newIndex = prev.questions.findIndex(q => q.id === over.id);
-        const newQuestions = arrayMove(prev.questions, oldIndex, newIndex)
-          .map((q, idx) => ({ ...q, orderIndex: idx }));
-        return { ...prev, questions: newQuestions };
-      });
-      setIsDirty(true);
-    }
   };
 
   const validateForm = () => {
