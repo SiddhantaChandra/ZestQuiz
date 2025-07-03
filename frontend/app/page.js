@@ -155,7 +155,7 @@ export default function Home() {
                             Score: <span className="font-semibold">{quiz.userAttempt.score}%</span>
                           </span>
                           <button 
-                            className="btn-secondary ml-auto"
+                            className="btn-secondary ml-auto text-black"
                             onClick={() => handleViewResults(quiz.id)}
                           >
                             View Results

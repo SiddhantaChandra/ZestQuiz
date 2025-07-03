@@ -100,8 +100,8 @@ export default function LoginForm() {
       <div className="mt-6 text-center text-sm text-text/60 dark:text-text-dark/60">
         <p>Demo Credentials:</p>
         <div className="mt-2 space-y-1">
-          <p>Admin: admin@zestquiz.com / adminPassword</p>
-          <p>User: user@zestquiz.com / userPassword</p>
+          <p>Admin: admin@zestquiz.com / Admin@123</p>
+          <p>User: user@zestquiz.com / User@123</p>
         </div>
       </div>
     </div>

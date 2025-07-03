@@ -100,9 +100,6 @@ export default function EditQuizClient() {
         }))
       };
 
-      // Log the data being sent
-      console.log('Sending update data:', JSON.stringify(updateData, null, 2));
-
       // Make the API call
       await api.patch(`/quizzes/${params.id}`, updateData);
       router.push('/admin/quizzes');

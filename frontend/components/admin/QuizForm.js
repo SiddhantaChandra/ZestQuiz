@@ -121,7 +121,10 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     setActiveDragId(null);
   };
 
-  const handleToggleAi = () => {
+  const handleToggleAi = (e) => {
+    // Prevent any form submission
+    e?.preventDefault?.();
+    
     // Check if there's actual data before showing the warning
     const hasData = formData.title.trim() !== '' || 
                    formData.description.trim() !== '' || 
@@ -132,19 +135,28 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     if (isDirty && hasData) {
       setShowAiConfirmModal(true);
     } else {
-      setIsAiMode(!isAiMode);
-      // Reset form data when switching modes if no real data exists
-      if (!hasData) {
-        setFormData({
-          title: '',
-          description: '',
-          tags: [],
-          status: 'DRAFT',
-          questions: [],
-        });
-        setIsDirty(false);
-      }
+      // Only switch mode and reset if there's no data
+      handleAiModeSwitch(e);
     }
+  };
+
+  const handleAiModeSwitch = (e) => {
+    // Prevent any form submission
+    e?.preventDefault?.();
+    
+    // Use setTimeout to ensure state updates happen in the correct order
+    setTimeout(() => {
+      setFormData({
+        title: '',
+        description: '',
+        tags: [],
+        status: 'DRAFT',
+        questions: [],
+      });
+      setIsDirty(false);
+      setIsAiMode(!isAiMode);
+      setShowAiConfirmModal(false);
+    }, 0);
   };
 
   const handleAiQuizGenerated = (aiQuizData) => {
@@ -166,10 +178,21 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         }))
       }))
     };
-    
-    setFormData(transformedData);
+
+    // Use setTimeout to ensure state updates happen in the correct order
+    setTimeout(() => {
+      // First switch to manual mode
     setIsAiMode(false);
+      
+      // Then update the form data
+      setFormData(transformedData);
+      
+      // Mark as dirty but don't submit
     setIsDirty(true);
+      
+      // Show success message
+      showSuccessToast('Quiz generated successfully! Review and save when ready.');
+    }, 0);
   };
 
   // Handle form field changes
@@ -346,7 +369,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault(); // Make preventDefault optional since we might call this programmatically
 
     if (!validateForm()) {
       return;
@@ -392,8 +415,8 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         showQuizUpdatedToast();
       } else {
         showQuizCreatedToast();
-      }
-      router.back();
+        }
+      router.push('/admin/quizzes');
     } catch (error) {
       console.error('Submit error:', error);
       const errorMessage = error.message || 'Failed to save quiz';
@@ -404,7 +427,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
 
   const generateAiQuestion = async () => {
     try {
-      setIsGeneratingQuestion(true);
+    setIsGeneratingQuestion(true);
       const response = await api.post('/ai/generate-question', {
         topic: formData.title, // Use title as the topic
         existingQuestions: formData.questions.map(q => ({
@@ -441,10 +464,10 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         }))
       };
 
-      setFormData(prev => ({
-        ...prev,
-        questions: [...prev.questions, newQuestion]
-      }));
+        setFormData(prev => ({
+          ...prev,
+          questions: [...prev.questions, newQuestion]
+        }));
       setIsDirty(true);
       showSuccessToast('Question generated successfully');
     } catch (error) {
@@ -499,11 +522,11 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       {/* AI Mode Confirmation Modal */}
       <Modal
         isOpen={showAiConfirmModal}
-        onClose={() => setShowAiConfirmModal(false)}
-        onConfirm={() => {
-          setIsAiMode(!isAiMode);
+        onClose={(e) => {
+          e?.preventDefault?.();
           setShowAiConfirmModal(false);
         }}
+        onConfirm={handleAiModeSwitch}
         title="Switch to AI Mode"
         message="Switching to AI mode will clear your current quiz. Are you sure you want to continue?"
         confirmText="Switch to AI Mode"
@@ -511,7 +534,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       />
 
       {isAiMode ? (
-        <AiQuizForm onQuizGenerated={handleAiQuizGenerated} onCancel={() => setIsAiMode(false)} />
+        <AiQuizForm onQuizGenerated={handleAiQuizGenerated} onCancel={handleAiModeSwitch} />
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex justify-between items-center">
@@ -519,45 +542,45 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
               {isEditing ? 'Edit Quiz' : 'Create Quiz'}
             </h1>
             {!isEditing && (
-              <ToggleAiButton isAiMode={false} onToggle={handleToggleAi} />
+              <ToggleAiButton isAiMode={isAiMode} onToggle={handleToggleAi} />
             )}
           </div>
 
           <div className="grid gap-6">
             {/* Title */}
-            <div>
+          <div>
               <label htmlFor="title" className="block text-sm font-medium text-text dark:text-text-dark mb-1">
-                Title
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
+              Title
+            </label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
                 className="w-full px-4 py-2 bg-card dark:bg-card-dark border border-border rounded-lg text-text dark:text-text-dark placeholder-text/50 dark:placeholder-text-dark/50"
-                placeholder="Enter quiz title"
-              />
-            </div>
+              placeholder="Enter quiz title"
+            />
+          </div>
 
             {/* Description */}
-            <div>
+          <div>
               <label htmlFor="description" className="block text-sm font-medium text-text dark:text-text-dark mb-1">
-                Description
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
+              Description
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
                 rows={4}
                 className="w-full px-4 py-2 bg-card dark:bg-card-dark border border-border rounded-lg text-text dark:text-text-dark placeholder-text/50 dark:placeholder-text-dark/50"
-                placeholder="Enter quiz description"
-              />
-            </div>
+              placeholder="Enter quiz description"
+            />
+          </div>
 
             {/* Tags */}
-            <div>
+          <div>
               <label htmlFor="tags" className="block text-sm font-medium text-text dark:text-text-dark mb-1">
                 Tags
               </label>
@@ -572,22 +595,22 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
                   placeholder="Type a tag and press Enter"
                 />
                 <div className="flex flex-wrap gap-2">
-                  {formData.tags.map(tag => (
-                    <span
-                      key={tag}
+              {formData.tags.map(tag => (
+                <span
+                  key={tag}
                       className="bg-background dark:bg-background-dark text-text dark:text-text-dark px-3 py-1 rounded-full text-sm border border-border flex items-center gap-2 capitalize"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeTag(tag)}
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
                         className="hover:text-red-500 dark:hover:text-red-400"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
               </div>
             </div>
 
@@ -607,27 +630,27 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
                 <option value="ACTIVE">Active</option>
                 <option value="INACTIVE">Inactive</option>
               </select>
-            </div>
+          </div>
 
             {/* Questions */}
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-text dark:text-text-dark">Questions</h2>
-                <button
-                  type="submit"
+              <button
+                type="submit"
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2"
-                >
-                  <FloppyDisk size={18} weight="bold" />
-                  Save Quiz
-                </button>
-              </div>
-
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
               >
+                  <FloppyDisk size={18} weight="bold" />
+                Save Quiz
+              </button>
+            </div>
+
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
                 <SortableContext
                   items={formData.questions?.map(q => q.id) || []}
                   strategy={verticalListSortingStrategy}
@@ -638,7 +661,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
                         key={question.id}
                         question={question}
                         onUpdate={(updates) => updateQuestion(question.id, updates)}
-                        onDelete={removeQuestion}
+                          onDelete={removeQuestion}
                         isDragging={activeDragId === question.id}
                         questionNumber={formData.questions.indexOf(question) + 1}
                       />
@@ -646,37 +669,37 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
                   </div>
                 </SortableContext>
               </DndContext>
-
+                      
               {/* Action Buttons Below Questions */}
               <div className="flex gap-2 mt-6">
-                <button
-                  type="button"
-                  onClick={generateAiQuestion}
-                  disabled={isGeneratingQuestion}
+                          <button
+                            type="button"
+                            onClick={generateAiQuestion}
+                            disabled={isGeneratingQuestion}
                   className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:transform-none disabled:shadow-none"
-                >
+                          >
                   <Lightning size={18} weight="bold" />
-                  {isGeneratingQuestion ? 'Generating...' : 'Generate AI Question'}
-                </button>
-                <button
-                  type="button"
-                  onClick={addQuestion}
+                            {isGeneratingQuestion ? 'Generating...' : 'Generate AI Question'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={addQuestion}
                   className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg transition-colors"
-                >
+                          >
                   <Plus size={18} weight="bold" />
-                  Add Question
-                </button>
-              </div>
+                            Add Question
+                          </button>
+          </div>
 
               {/* Footer Save Button */}
               <div className="mt-8 pt-6 border-t border-border">
-                <button
-                  type="submit"
+            <button
+              type="submit"
                   className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-all duration-200 font-medium flex items-center justify-center gap-2"
-                >
+            >
                   <FloppyDisk size={20} weight="bold" />
-                  Save Quiz
-                </button>
+              Save Quiz
+            </button>
               </div>
             </div>
           </div>

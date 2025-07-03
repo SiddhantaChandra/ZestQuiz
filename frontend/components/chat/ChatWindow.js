@@ -73,7 +73,7 @@ export default function ChatWindow({ attemptId }) {
         createdAt: new Date().toISOString(),
       };
       setMessages(prevMessages => [...prevMessages, userMessage]);
-      
+
       // Show typing indicator after a short delay
       setTimeout(() => {
         setIsTyping(true);
@@ -83,7 +83,7 @@ export default function ChatWindow({ attemptId }) {
       try {
         const response = await api.post(`/chat/${attemptId}/messages`, {
           message: content
-        });
+      });
 
         // Hide typing indicator and add AI response
         setIsTyping(false);
@@ -92,7 +92,7 @@ export default function ChatWindow({ attemptId }) {
           {
             id: response.data.id,
             content: response.data.content,
-            isUserMessage: false,
+        isUserMessage: false,
             createdAt: response.data.createdAt,
           }
         ]);
@@ -125,27 +125,27 @@ export default function ChatWindow({ attemptId }) {
 
       {/* Messages (scrollable area) */}
       <div className="flex-1 min-h-0">
-        <div 
+      <div 
           ref={messagesContainerRef}
           onScroll={handleScroll}
           className="h-full overflow-y-auto p-4 space-y-4 bg-white/50 dark:bg-neutral-900/50
             scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 
             dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 
             scrollbar-track-transparent"
-        >
-          {messages.length === 0 ? (
+      >
+        {messages.length === 0 ? (
             <div className="text-center text-gray-500 dark:text-gray-400 mt-4">
-              <p>No messages yet.</p>
-              <p className="text-sm mt-2">Try asking about your quiz results!</p>
-            </div>
-          ) : (
+            <p>No messages yet.</p>
+            <p className="text-sm mt-2">Try asking about your quiz results!</p>
+          </div>
+        ) : (
             <>
               {messages.map(message => (
-                <ChatMessage
-                  key={message.id}
-                  message={message}
-                  isUser={message.isUserMessage}
-                />
+            <ChatMessage
+              key={message.id}
+              message={message}
+              isUser={message.isUserMessage}
+            />
               ))}
               {isTyping && (
                 <ChatMessage
@@ -165,7 +165,7 @@ export default function ChatWindow({ attemptId }) {
 
       {/* Input */}
       <div className="flex-none border-t border-gray-200/50 dark:border-neutral-800/50">
-        <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
+      <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
       </div>
     </div>
   );

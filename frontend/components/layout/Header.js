@@ -88,12 +88,12 @@ export default function Header() {
                 >
                   Login
                 </Link>
-                <Link
+                {/* <Link
                   href="/auth/register"
                   className="px-4 py-2 rounded-lg border border-border hover:bg-background dark:hover:bg-background-dark transition-all hidden sm:inline-block"
                 >
                   Register
-                </Link>
+                </Link> */}
               </div>
             ) : (
               <div className="w-32 h-10" /> // Placeholder to prevent layout shift

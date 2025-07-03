@@ -61,11 +61,23 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
 
     try {
       const response = await api.post('/ai/generate-quiz', formData);
+      
+      // Instead of calling onQuizGenerated directly, wrap it in a setTimeout
+      // to ensure React state updates are completed first
+      setTimeout(() => {
+        setIsLoading(false);
+        clearInterval(messageInterval);
+        setLoadingMessageIndex(0);
+        
+        // Call onQuizGenerated with the response data
+        if (onQuizGenerated) {
       onQuizGenerated(response.data);
+        }
+      }, 0);
+      
     } catch (error) {
       setError(error.message || 'Failed to generate quiz');
       showErrorToast(error.message || 'Failed to generate quiz');
-    } finally {
       setIsLoading(false);
       clearInterval(messageInterval);
       setLoadingMessageIndex(0);
@@ -129,31 +141,31 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
           </div>
         ) : (
           // Form when not loading
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
               <label htmlFor="topic" className="block text-sm font-medium text-text dark:text-text-dark mb-2">
-                Quiz Topic
-              </label>
-              <input
-                type="text"
-                id="topic"
-                value={formData.topic}
-                onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+            Quiz Topic
+          </label>
+          <input
+            type="text"
+            id="topic"
+            value={formData.topic}
+            onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
                 className="w-full px-4 py-2 bg-background dark:bg-background-dark border border-border rounded-lg text-text dark:text-text-dark placeholder-text/50 dark:placeholder-text-dark/50 focus:outline-none focus:ring-2 focus:ring-primary/30 dark:focus:ring-primary/50"
-                placeholder="Enter a topic (e.g., 'JavaScript Basics', 'World History')"
-                required
-              />
-            </div>
+            placeholder="Enter a topic (e.g., 'JavaScript Basics', 'World History')"
+            required
+          />
+        </div>
 
-            <div>
+        <div>
               <label htmlFor="numQuestions" className="block text-sm font-medium text-text dark:text-text-dark mb-2">
                 Number of Questions (5-30)
-              </label>
+          </label>
               <div className="relative">
                 <input
                   type="number"
-                  id="numQuestions"
-                  value={formData.numQuestions}
+            id="numQuestions"
+            value={formData.numQuestions}
                   onChange={(e) => {
                     const value = e.target.value;
                     setFormData({ ...formData, numQuestions: value });
@@ -165,7 +177,7 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
               <p className="mt-1 text-xs text-text/70 dark:text-text-dark/70">
                 Choose between 5 and 30 questions for your quiz
               </p>
-            </div>
+        </div>
 
             <button
               type="submit"
@@ -181,8 +193,8 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
               </div>
             )}
           </form>
-        )}
-      </div>
+          )}
+        </div>
 
       <div className="text-sm text-gray-500 dark:text-gray-400">
         Don&apos;t worry about formatting, our AI will handle that!

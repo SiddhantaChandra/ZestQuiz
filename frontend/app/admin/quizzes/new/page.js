@@ -9,9 +9,7 @@ export default function CreateQuizPage() {
 
   const handleSubmit = async (formData) => {
     try {
-      console.log('Sending data to backend:', JSON.stringify(formData, null, 2));
       const response = await api.post('/quizzes', formData);
-      console.log('Backend response:', response.data);
       router.push('/admin/quizzes');
     } catch (error) {
       console.error('Backend error details:', {
