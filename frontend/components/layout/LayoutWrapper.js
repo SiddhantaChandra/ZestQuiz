@@ -10,7 +10,6 @@ export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
-  // Determine layout type
   const isQuizTaking = pathname?.includes('/quizzes/') && pathname?.includes('/take');
   const isAdminRoute = pathname?.startsWith('/admin');
   const showFooter = !isAdminRoute && !isQuizTaking;
@@ -20,12 +19,10 @@ export default function LayoutWrapper({ children }) {
     setMounted(true);
   }, []);
 
-  // Quiz taking has no chrome
   if (isQuizTaking) {
     return <>{children}</>;
   }
 
-  // Don't render anything until mounted to prevent hydration issues
   if (!mounted) {
     return (
       <div className="flex flex-col min-h-screen">

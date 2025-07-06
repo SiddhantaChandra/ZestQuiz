@@ -64,7 +64,6 @@ export default function Home() {
     router.push(`/quizzes/${quizId}/results`);
   };
 
-  // Helper function to get tag display info
   const getTagDisplay = (tagValue) => {
     const tagObj = tags.find(t => t.value === tagValue);
     return tagObj ? tagObj : { value: tagValue, label: tagValue, emoji: '' };

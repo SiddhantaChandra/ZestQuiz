@@ -22,7 +22,6 @@ export default function AdminDashboard() {
         const response = await api.get('/quizzes');
         const quizzes = response.data;
         
-        // Calculate stats
         setStats({
           totalQuizzes: quizzes.length,
           activeQuizzes: quizzes.filter(q => q.status === 'ACTIVE').length,
@@ -30,7 +29,6 @@ export default function AdminDashboard() {
           inactiveQuizzes: quizzes.filter(q => q.status === 'INACTIVE').length,
         });
 
-        // Get 5 most recent quizzes
         const sortedQuizzes = [...quizzes].sort(
           (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
         ).slice(0, 5);
@@ -82,7 +80,6 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-card dark:bg-card-dark p-6 rounded-lg shadow-custom border border-border">
           <h3 className="text-lg font-semibold text-text/70">Total Quizzes</h3>
@@ -102,7 +99,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="bg-card dark:bg-card-dark p-6 rounded-lg shadow-custom border border-border">
         <h2 className="text-xl font-semibold mb-4 text-text">Quick Actions</h2>
         <div className="flex gap-4">

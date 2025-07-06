@@ -35,7 +35,6 @@ export default function EditQuizClient() {
 
   const handleSubmit = async (formData) => {
     try {
-      // Basic validation
       if (!formData.title?.trim() || formData.title.trim().length < 3) {
         throw new Error('Quiz title must be at least 3 characters long');
       }
@@ -46,14 +45,11 @@ export default function EditQuizClient() {
         throw new Error('At least one tag is required');
       }
 
-      // Prepare questions data
       const questions = formData.questions.map((question, qIndex) => {
-        // Validate question
         if (!question.text?.trim()) {
           throw new Error(`Question ${qIndex + 1} text is required`);
         }
 
-        // Validate options
         if (!Array.isArray(question.options) || question.options.length < 2) {
           throw new Error(`Question ${qIndex + 1} must have at least 2 options`);
         }
@@ -63,7 +59,6 @@ export default function EditQuizClient() {
           throw new Error(`Question ${qIndex + 1} must have exactly one correct answer`);
         }
 
-        // Return only the fields needed for update
         return {
           id: question.id,
           text: question.text.trim(),
@@ -75,7 +70,6 @@ export default function EditQuizClient() {
               orderIndex: oIndex
             };
 
-            // Only include id if it exists and is not empty
             if (option.id && typeof option.id === 'string' && option.id.trim()) {
               return { ...baseOption, id: option.id };
             }
@@ -84,7 +78,6 @@ export default function EditQuizClient() {
         };
       });
 
-      // Prepare update data with only the necessary fields
       const updateData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -94,13 +87,11 @@ export default function EditQuizClient() {
           ...question,
           options: question.options.map(option => ({
             ...option,
-            // Ensure text is not empty
             text: option.text || `Option ${option.orderIndex + 1}`
           }))
         }))
       };
 
-      // Make the API call
       await api.patch(`/quizzes/${params.id}`, updateData);
       router.push('/admin/quizzes');
     } catch (error) {

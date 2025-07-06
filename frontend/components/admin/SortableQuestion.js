@@ -34,7 +34,6 @@ export default function SortableQuestion({ question, questionNumber, onUpdate, o
   const handleOptionChange = (optionIndex, field, value) => {
     const newOptions = [...question.options];
     if (field === 'isCorrect') {
-      // Uncheck all other options
       newOptions.forEach((opt, idx) => {
         newOptions[idx] = { ...opt, isCorrect: idx === optionIndex };
       });

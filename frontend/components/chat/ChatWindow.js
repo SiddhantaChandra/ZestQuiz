@@ -17,7 +17,6 @@ export default function ChatWindow({ attemptId }) {
   const prevMessagesLength = useRef(messages.length);
   const shouldAutoScroll = useRef(true);
 
-  // Handle scroll events to determine if we should auto-scroll
   const handleScroll = () => {
     if (!messagesContainerRef.current) return;
     
@@ -26,7 +25,6 @@ export default function ChatWindow({ attemptId }) {
     shouldAutoScroll.current = isAtBottom;
   };
 
-  // Only scroll when new messages are added AND user was already at bottom
   useEffect(() => {
     if (messages.length > prevMessagesLength.current && shouldAutoScroll.current && messagesContainerRef.current) {
       const container = messagesContainerRef.current;
@@ -42,7 +40,6 @@ export default function ChatWindow({ attemptId }) {
           const response = await api.get(`/chat/${attemptId}/history`);
           setMessages(response.data);
           updateChatHistory(attemptId, response.data);
-          // No forced scroll on initial load
         } catch (error) {
           console.error('Failed to load chat history:', error);
           const cachedMessages = getChatHistory(attemptId);
@@ -63,9 +60,8 @@ export default function ChatWindow({ attemptId }) {
   const handleSendMessage = async (content) => {
     try {
       setIsLoading(true);
-      shouldAutoScroll.current = true; // Always scroll on user message
+      shouldAutoScroll.current = true;
       
-      // Add user message
       const userMessage = {
         id: 'user-' + Date.now(),
         content,
@@ -74,18 +70,15 @@ export default function ChatWindow({ attemptId }) {
       };
       setMessages(prevMessages => [...prevMessages, userMessage]);
 
-      // Show typing indicator after a short delay
       setTimeout(() => {
         setIsTyping(true);
       }, 500);
 
-      // Send message to API
       try {
         const response = await api.post(`/chat/${attemptId}/messages`, {
           message: content
       });
 
-        // Hide typing indicator and add AI response
         setIsTyping(false);
         setMessages(prevMessages => [
           ...prevMessages,
@@ -117,13 +110,11 @@ export default function ChatWindow({ attemptId }) {
 
   return (
     <div className="fixed bottom-24 right-6 w-96 h-[600px] bg-white dark:bg-neutral-900 rounded-lg shadow-xl flex flex-col border border-gray-200/50 dark:border-neutral-800/50 backdrop-blur-sm z-50">
-      {/* Header */}
       <div className="flex-none bg-purple-600 dark:bg-purple-700 text-white p-4 border-b border-purple-500/20">
         <h3 className="text-lg font-semibold">Quiz Assistant</h3>
         <p className="text-sm text-purple-200">Ask me anything about your quiz results</p>
       </div>
 
-      {/* Messages (scrollable area) */}
       <div className="flex-1 min-h-0">
       <div 
           ref={messagesContainerRef}
@@ -163,7 +154,6 @@ export default function ChatWindow({ attemptId }) {
         </div>
       </div>
 
-      {/* Input */}
       <div className="flex-none border-t border-gray-200/50 dark:border-neutral-800/50">
       <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
       </div>

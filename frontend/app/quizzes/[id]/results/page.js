@@ -23,7 +23,6 @@ export default function QuizResults() {
       if (!params?.id) return;
       
       try {
-        // First, get the latest attempt ID for this quiz
         const attemptsResponse = await api.get(`/quizzes/${params.id}/attempts`);
         const latestAttempt = attemptsResponse.data;
         if (!latestAttempt) {
@@ -31,8 +30,7 @@ export default function QuizResults() {
         }
         setAttemptId(latestAttempt.id);
         setAttemptContext(latestAttempt.id);
-
-        // Then get the results
+        
         const response = await api.get(`/quizzes/${params.id}/results`);
         setResults(response.data);
         setError(null);

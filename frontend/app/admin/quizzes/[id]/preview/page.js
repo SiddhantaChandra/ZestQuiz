@@ -18,7 +18,6 @@ export default function QuizPreviewPage() {
 
       try {
         const response = await api.get(`/quizzes/${params.id}`);
-        // Sort questions by orderIndex
         const sortedQuestions = response.data.questions.sort((a, b) => a.orderIndex - b.orderIndex);
         setQuiz({ ...response.data, questions: sortedQuestions });
         setError(null);

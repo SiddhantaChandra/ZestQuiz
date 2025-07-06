@@ -14,7 +14,6 @@ export class QuizService {
     const { questions, ...quizData } = createQuizDto;
 
     return this.prisma.$transaction(async (prisma) => {
-      // Create the quiz first
       const quiz = await prisma.quiz.create({
         data: {
           ...quizData,
@@ -22,7 +21,6 @@ export class QuizService {
         },
       });
 
-      // If there are questions, create them with their options
       if (questions && questions.length > 0) {
         for (const question of questions) {
           const { options, ...questionData } = question;
@@ -38,7 +36,6 @@ export class QuizService {
         }
       }
 
-      // Return the complete quiz with questions and options
       return prisma.quiz.findUnique({
         where: { id: quiz.id },
         include: {
@@ -111,33 +108,25 @@ export class QuizService {
     try {
       const { questions, ...quizData } = updateQuizDto;
 
-      // First, get the existing quiz to check if it exists
       const existingQuiz = await this.findOne(id);
 
-      // Start a transaction to update everything
       return await this.prisma.$transaction(async (prisma) => {
-        // Update basic quiz data
         const quiz = await prisma.quiz.update({
           where: { id },
           data: quizData as Prisma.QuizUpdateInput,
         });
 
-        // If questions are provided, handle them
         if (questions) {
-          // Get all existing question IDs
           const existingQuestionIds = existingQuiz.questions.map(q => q.id);
           
-          // Process each question
           for (const question of questions) {
             if (question.id && existingQuestionIds.includes(question.id)) {
-              // Get existing question with options
               const existingQuestion = await prisma.question.findUnique({
                 where: { id: question.id },
                 include: { options: true }
               });
 
               if (existingQuestion) {
-              // Update existing question
               await prisma.question.update({
                 where: { id: question.id },
                 data: {
@@ -146,13 +135,10 @@ export class QuizService {
                   },
                 });
 
-                // Handle options separately
                 const existingOptionIds = existingQuestion.options.map(o => o.id);
                 
-                // Update or create options
                 for (const option of question.options) {
                   if (option.id && existingOptionIds.includes(option.id)) {
-                    // Update existing option
                     await prisma.option.update({
                       where: { id: option.id },
                       data: {
@@ -162,7 +148,6 @@ export class QuizService {
                       },
                     });
                   } else {
-                    // Create new option
                     await prisma.option.create({
                       data: {
                         text: option.text,
@@ -174,7 +159,6 @@ export class QuizService {
                   }
                 }
 
-                // Delete options that are no longer present
                 const updatedOptionIds = question.options
                   .filter(o => o.id)
                   .map(o => o.id);
@@ -189,7 +173,6 @@ export class QuizService {
               });
               }
             } else {
-              // Create new question with options
               await prisma.question.create({
                 data: {
                   text: question.text,
@@ -207,7 +190,6 @@ export class QuizService {
             }
           }
 
-          // Delete questions that are no longer in the update
           const updatedQuestionIds = questions
             .filter(q => q.id && existingQuestionIds.includes(q.id))
             .map(q => q.id);
@@ -224,7 +206,6 @@ export class QuizService {
           }
         }
 
-        // Return the updated quiz with all relations
         return prisma.quiz.findUnique({
           where: { id },
           include: {
@@ -256,7 +237,6 @@ export class QuizService {
 
   async remove(id: string) {
     try {
-      // First check if the quiz exists
       const quiz = await this.prisma.quiz.findUnique({
         where: { id }
       });
@@ -265,7 +245,6 @@ export class QuizService {
         throw new NotFoundException(`Quiz with ID ${id} not found`);
       }
 
-      // Delete the quiz - Prisma will handle cascading deletes
       return await this.prisma.quiz.delete({
         where: { id }
       });
@@ -278,10 +257,8 @@ export class QuizService {
   }
 
   async addQuestion(quizId: string, createQuestionDto: CreateQuestionDto) {
-    // Verify quiz exists
     await this.findOne(quizId);
 
-    // Verify only one correct answer
     const correctAnswers = createQuestionDto.options.filter(opt => opt.isCorrect);
     if (correctAnswers.length !== 1) {
       throw new BadRequestException('Question must have exactly one correct answer');
@@ -303,7 +280,6 @@ export class QuizService {
   }
 
   async updateQuestion(questionId: string, updateQuestionDto: UpdateQuestionDto) {
-    // First check if question exists
     const question = await this.prisma.question.findUnique({
       where: { id: questionId },
       include: { options: true },
@@ -313,14 +289,12 @@ export class QuizService {
       throw new NotFoundException(`Question with ID ${questionId} not found`);
     }
 
-    // If options are being updated, verify one correct answer
     if (updateQuestionDto.options) {
       const correctAnswers = updateQuestionDto.options.filter(opt => opt.isCorrect);
       if (correctAnswers.length !== 1) {
         throw new BadRequestException('Question must have exactly one correct answer');
       }
 
-      // Delete existing options and create new ones
       await this.prisma.option.deleteMany({
         where: { questionId },
       });
@@ -340,7 +314,6 @@ export class QuizService {
       });
     }
 
-    // If only updating question text or order
     return this.prisma.question.update({
       where: { id: questionId },
       data: {
@@ -354,8 +327,7 @@ export class QuizService {
   }
 
   async deleteQuestion(questionId: string) {
-    try {
-      // This will cascade delete related options due to our schema setup
+    try { 
       return await this.prisma.question.delete({
         where: { id: questionId },
       });
@@ -365,10 +337,8 @@ export class QuizService {
   }
 
   async reorderQuestions(quizId: string, questionIds: string[]) {
-    // Verify quiz exists
     await this.findOne(quizId);
 
-    // Update each question's order
     const updates = questionIds.map((id, index) => 
       this.prisma.question.update({
         where: { id },
@@ -431,9 +401,7 @@ export class QuizService {
     userId: string,
   ) {
     try {
-      // Start a transaction
       return this.prisma.$transaction(async (prisma) => {
-        // Check if user has already attempted this quiz
         const existingAttempt = await prisma.quizAttempt.findFirst({
           where: {
             quizId,
@@ -445,7 +413,6 @@ export class QuizService {
           throw new BadRequestException('You have already attempted this quiz');
         }
 
-        // Get quiz with questions and correct answers
         const quiz = await prisma.quiz.findUnique({
           where: { id: quizId },
           include: {
@@ -461,7 +428,6 @@ export class QuizService {
           throw new NotFoundException('Quiz not found');
         }
 
-        // Validate timestamps
         const startTime = new Date(submitQuizDto.startTime);
         const endTime = new Date(submitQuizDto.endTime);
 
@@ -477,27 +443,23 @@ export class QuizService {
           throw new BadRequestException('End time cannot be before start time');
         }
 
-        // Validate answers
         if (!submitQuizDto.answers || submitQuizDto.answers.length !== quiz.questions.length) {
           throw new BadRequestException('Number of answers does not match number of questions');
         }
 
-        // Calculate score
         let correctAnswers = 0;
         const totalQuestions = quiz.questions.length;
 
-        // Create attempt with start and end times
         const attempt = await prisma.quizAttempt.create({
           data: {
             quizId,
             userId,
-            score: 0, // Will update this after processing answers
+            score: 0,
             startedAt: startTime,
             submittedAt: endTime,
           },
         });
 
-        // Process each answer
         for (const answer of submitQuizDto.answers) {
           const question = quiz.questions.find(q => q.id === answer.questionId);
           if (!question) {
@@ -512,7 +474,6 @@ export class QuizService {
           const isCorrect = selectedOption.isCorrect;
           if (isCorrect) correctAnswers++;
 
-          // Save the answer
           await prisma.userAnswer.create({
             data: {
               questionId: question.id,
@@ -524,7 +485,6 @@ export class QuizService {
           });
         }
 
-        // Update attempt with final score
         const score = Math.round((correctAnswers / totalQuestions) * 100);
         await prisma.quizAttempt.update({
           where: { id: attempt.id },
@@ -608,10 +568,10 @@ export class QuizService {
       where: {
         quizId,
         userId,
-        submittedAt: { not: null }, // Only get completed attempts
+        submittedAt: { not: null },
       },
       orderBy: {
-        submittedAt: 'desc', // Get the most recent attempt
+        submittedAt: 'desc',
       },
       select: {
         id: true,

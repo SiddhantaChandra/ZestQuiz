@@ -23,14 +23,12 @@ export default function TakeQuizClient() {
       if (!params?.id) return;
 
       try {
-        // First check if user has already attempted this quiz
         const attemptCheck = await api.get(`/quizzes/${params.id}/attempt-check`);
         if (attemptCheck.data.hasAttempted) {
           router.push(`/quizzes/${params.id}/results`);
           return;
         }
 
-        // If not attempted, fetch quiz
         const response = await api.get(`/quizzes/${params.id}`);
         setQuiz(response.data);
         setStartTime(new Date().toISOString());
@@ -47,7 +45,6 @@ export default function TakeQuizClient() {
     fetchQuiz();
   }, [params?.id, router]);
 
-  // Timer effect
   useEffect(() => {
     if (!startTime) return;
 
@@ -87,7 +84,6 @@ export default function TakeQuizClient() {
   };
 
   const handleSubmit = async () => {
-    // Check if all questions are answered
     const unansweredQuestions = quiz.questions.filter(
       q => !selectedAnswers[q.id]
     );

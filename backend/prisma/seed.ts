@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Clean up existing data if any tables exist
+
   try {
     await prisma.chatMessage.deleteMany();
     await prisma.userAnswer.deleteMany();
@@ -14,7 +14,7 @@ async function main() {
     await prisma.quiz.deleteMany();
     await prisma.user.deleteMany();
   } catch (error) {
-    console.log('Some tables do not exist yet, proceeding with seeding...');
+    console.log('Starting seeding');
   }
 
   const adminUser = await prisma.user.create({

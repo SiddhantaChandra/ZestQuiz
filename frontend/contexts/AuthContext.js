@@ -10,7 +10,6 @@ import {
   withToastErrorHandler
 } from '@/lib/toast';
 
-// Cookie helper functions
 const setCookie = (name, value, days = 7) => {
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
   document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
@@ -20,7 +19,6 @@ const deleteCookie = (name) => {
   document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 };
 
-// Export the context
 export const AuthContext = createContext({
   user: null,
   loading: true,
@@ -33,7 +31,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Check token and load user data on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -41,7 +38,7 @@ export function AuthProvider({ children }) {
         const token = localStorage.getItem('token');
         
         if (token) {
-          setCookie('token', token, 7);  // Sync cookie with localStorage
+          setCookie('token', token, 7);
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
           const response = await api.get('/auth/check');
@@ -58,8 +55,7 @@ export function AuthProvider({ children }) {
 
     checkAuth();
   }, []);
-
-  // Clean up authentication state
+  
   const cleanupAuth = () => {
     setUser(null);
     localStorage.removeItem('token');

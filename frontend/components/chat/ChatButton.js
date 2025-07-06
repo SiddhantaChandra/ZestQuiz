@@ -8,11 +8,9 @@ export default function ChatButton() {
   const { isChatOpen, toggleChat } = useChat();
 
   useEffect(() => {
-    // Removed console logs
   }, [isChatOpen]);
 
   useEffect(() => {
-    // Removed console logs
   }, [isChatOpen]);
 
   const handleClick = () => {

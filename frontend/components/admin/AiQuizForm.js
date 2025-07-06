@@ -10,7 +10,6 @@ const questionOptions = [5, 10, 15, 20];
 
 const generateUniqueId = (prefix) => `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-// Fun loading messages that rotate
 const loadingMessages = [
   { text: "🧠 AI is thinking hard...", icon: Brain },
   { text: "✨ Crafting amazing questions...", icon: Sparkle },
@@ -54,7 +53,6 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
 
     setIsLoading(true);
 
-    // Rotate loading messages every 2 seconds
     const messageInterval = setInterval(() => {
       setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
     }, 2000);
@@ -62,14 +60,11 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
     try {
       const response = await api.post('/ai/generate-quiz', formData);
       
-      // Instead of calling onQuizGenerated directly, wrap it in a setTimeout
-      // to ensure React state updates are completed first
       setTimeout(() => {
         setIsLoading(false);
         clearInterval(messageInterval);
         setLoadingMessageIndex(0);
         
-        // Call onQuizGenerated with the response data
         if (onQuizGenerated) {
       onQuizGenerated(response.data);
         }
@@ -89,7 +84,6 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
 
   return (
     <div>
-      {/* Header with Create Quiz title and Toggle AI Button */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-text dark:text-text-dark">
           Create Quiz
@@ -97,7 +91,6 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
         {!isLoading && <ToggleAiButton isAiMode={true} onToggle={onCancel} />}
       </div>
 
-      {/* AI Quiz Generation Form */}
       <div className="p-6 bg-card dark:bg-card-dark rounded-lg shadow-custom border border-border">
         <h2 className="text-2xl font-bold mb-6 text-text dark:text-text-dark flex items-center gap-2">
           <Lightning className="text-purple-500" size={28} />
@@ -105,9 +98,7 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
         </h2>
         
         {isLoading ? (
-          // Fun Loading State
           <div className="flex flex-col items-center justify-center space-y-8 py-16">
-            {/* Icon with purple background */}
             <div className="p-6 bg-purple-100 dark:bg-purple-900/30 rounded-full">
               <LoadingIcon 
                 size={48} 
@@ -115,12 +106,10 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
               />
             </div>
             
-            {/* Loading message */}
             <div className="text-xl font-semibold text-text dark:text-text-dark animate-pulse">
               {currentLoadingMessage.text}
             </div>
             
-            {/* Simple progress dots */}
             <div className="flex space-x-2">
               {[...Array(3)].map((_, i) => (
                 <div
@@ -131,7 +120,6 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
               ))}
             </div>
 
-            {/* Fun fact */}
             <div className="max-w-md text-center px-4">
               <p className="text-sm text-text/70 dark:text-text-dark/70">
                 Did you know? Our AI can generate questions on virtually any topic! 
@@ -140,7 +128,6 @@ export default function AiQuizForm({ onQuizGenerated, onCancel }) {
             </div>
           </div>
         ) : (
-          // Form when not loading
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
               <label htmlFor="topic" className="block text-sm font-medium text-text dark:text-text-dark mb-2">

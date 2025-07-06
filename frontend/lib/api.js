@@ -7,7 +7,6 @@ const api = axios.create({
   },
 });
 
-// Only add token interceptor in browser environment
 if (typeof window !== 'undefined') {
   api.interceptors.request.use(
     (config) => {
@@ -23,16 +22,12 @@ if (typeof window !== 'undefined') {
   );
 }
 
-// Add a response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle unauthorized errors (401)
     if (error.response?.status === 401) {
-      // Clear token and user data
       localStorage.removeItem('token');
       delete api.defaults.headers.common['Authorization'];
-      // Redirect to login page if we're on the client side
       if (typeof window !== 'undefined') {
         window.location.href = '/auth/login';
       }
@@ -41,7 +36,6 @@ api.interceptors.response.use(
   }
 );
 
-// Quiz related API calls
 export const fetchQuizzes = () => api.get('/quizzes');
 export const fetchPublicQuizzes = () => api.get('/quizzes/public');
 export const fetchActiveQuizzes = () => api.get('/quizzes/active');

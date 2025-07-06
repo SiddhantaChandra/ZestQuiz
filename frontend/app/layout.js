@@ -2,14 +2,12 @@ import './globals.css';
 import ClientLayout from './ClientLayout';
 import { Fredoka, Nunito } from 'next/font/google';
 
-// Load Fredoka font
 const fredoka = Fredoka({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-fredoka',
 });
 
-// Load Nunito font
 const nunito = Nunito({
   subsets: ['latin'],
   display: 'swap',

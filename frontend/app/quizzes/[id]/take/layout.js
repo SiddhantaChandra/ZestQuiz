@@ -5,7 +5,6 @@ export const metadata = {
   title: 'Take Quiz - ZestQuiz'
 };
 
-// This tells Next.js to use this layout instead of the root layout
 export const dynamic = 'force-dynamic';
 
 export default function QuizTakeLayout({ children }) {

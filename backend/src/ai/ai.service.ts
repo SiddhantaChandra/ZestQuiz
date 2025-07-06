@@ -98,7 +98,7 @@ Provide a brief, clear explanation of why the user's answer is incorrect and why
             },
           ],
           temperature: 0.5,
-          max_tokens: 150, // Keep explanations concise
+          max_tokens: 150,
         },
         {
           headers: {
@@ -164,13 +164,11 @@ Provide a brief, clear explanation of why the user's answer is incorrect and why
     try {
       const { quiz, userAnswers, score, question } = context;
       
-      // Check if the message is relevant to the quiz
       const isRelevant = await this.checkMessageRelevance(message, quiz);
       if (!isRelevant) {
         return "I notice your question might not be directly related to the quiz. To help you better, please ask questions about the quiz content, your answers, or specific concepts covered in the questions. Feel free to ask about any question from the quiz or concepts you'd like me to explain further.";
       }
 
-      // Build context-aware prompt
       let prompt = `As a helpful AI tutor, I'm here to assist with your quiz questions. `;
       
       if (question) {
@@ -213,7 +211,6 @@ Provide a brief, clear explanation of why the user's answer is incorrect and why
 
   async checkMessageRelevance(message: string, quiz: any): Promise<boolean> {
     try {
-      // Create a context string from quiz content
       const quizContent = quiz.questions.map(q => {
         const questionText = q.text;
         const options = q.options.map(o => o.text).join(' ');
@@ -296,7 +293,6 @@ Requirements:
 
   private parseAiResponse(response: string): AIQuizResponse {
     try {
-      // Find the JSON object in the response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No valid JSON object found in response');
@@ -323,32 +319,26 @@ Requirements:
       throw new HttpException('Quiz tags are required', HttpStatus.BAD_REQUEST);
     }
 
-    // Validate structure
     if (quizResponse.tags.length !== 4) {
       throw new Error('Quiz must have exactly 4 tags');
     }
 
-    // Validate category
     const category = quizResponse.tags[0];
     if (!VALID_CATEGORIES.includes(category)) {
       throw new Error(`First tag must be one of: ${VALID_CATEGORIES.join(', ')}`);
     }
 
-    // Validate questions
     quizResponse.quiz.forEach(question => {
-      // Ensure exactly 4 options
       if (question.options.length !== 4) {
         throw new Error('Each question must have exactly 4 options');
       }
 
-      // Ensure exactly one correct answer
       const correctAnswers = question.options.filter(opt => opt.isCorrect);
       if (correctAnswers.length !== 1) {
         throw new Error('Each question must have exactly one correct answer');
       }
     });
 
-    // Add topic to the response
     return {
       ...quizResponse,
       topic: topic,
@@ -402,23 +392,19 @@ Requirements:
   }
 
   private validateSingleQuestion(question: QuizQuestion): QuizQuestion {
-    // Ensure exactly 4 options
     if (question.options.length !== 4) {
       throw new Error('Question must have exactly 4 options');
     }
 
-    // Ensure exactly one correct answer
     const correctAnswers = question.options.filter(opt => opt.isCorrect);
     if (correctAnswers.length !== 1) {
       throw new Error('Question must have exactly one correct answer');
     }
 
-    // Ensure question text exists
     if (!question.question || typeof question.question !== 'string' || !question.question.trim()) {
       throw new Error('Question must have text');
     }
 
-    // Validate each option
     question.options.forEach(option => {
       if (!option.text || typeof option.text !== 'string' || !option.text.trim()) {
         throw new Error('Each option must have text');

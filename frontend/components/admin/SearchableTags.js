@@ -6,13 +6,11 @@ export default function SearchableTags({ allTags, selectedTags, onTagsChange }) 
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Filter tags based on search term
   const filteredTags = allTags.filter(tag => 
     tag.toLowerCase().includes(searchTerm.toLowerCase()) &&
     !selectedTags.includes(tag)
   );
 
-  // Handle click outside to close dropdown
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target) &&
@@ -25,7 +23,6 @@ export default function SearchableTags({ allTags, selectedTags, onTagsChange }) 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Handle tag selection
   const handleTagSelect = (tag) => {
     onTagsChange([...selectedTags, tag]);
     setSearchTerm('');
@@ -47,7 +44,6 @@ export default function SearchableTags({ allTags, selectedTags, onTagsChange }) 
         onFocus={() => setIsDropdownOpen(true)}
       />
 
-      {/* Dropdown */}
       {isDropdownOpen && filteredTags.length > 0 && (
         <div
           ref={dropdownRef}

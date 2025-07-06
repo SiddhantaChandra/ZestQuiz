@@ -10,7 +10,6 @@ export function ChatProvider({ children }) {
   const [chatHistory, setChatHistory] = useState({});
   const [windowState, setWindowState] = useState({});
 
-  // Load persisted state from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedWindowState = localStorage.getItem('chatWindowState');
@@ -25,14 +24,12 @@ export function ChatProvider({ children }) {
     }
   }, []);
 
-  // Persist window state to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined' && Object.keys(windowState).length > 0) {
       localStorage.setItem('chatWindowState', JSON.stringify(windowState));
     }
   }, [windowState]);
 
-  // Persist chat history to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined' && Object.keys(chatHistory).length > 0) {
       localStorage.setItem('chatHistory', JSON.stringify(chatHistory));

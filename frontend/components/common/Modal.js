@@ -14,7 +14,7 @@ export default function Modal({
   showCancel = true,
   isDestructive = false
 }) {
-  // Handle escape key press
+
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -26,7 +26,6 @@ export default function Modal({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  // Handle background scroll
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';

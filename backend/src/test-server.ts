@@ -1,4 +1,4 @@
-// Simple test server to verify Railway deployment
+
 const http = require('http');
 
 const port = process.env.PORT || 8080;

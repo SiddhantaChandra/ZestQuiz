@@ -23,7 +23,6 @@ async function generateHash(password) {
 
 console.log('Generating hashes and SQL statements...\n');
 
-// Generate hashes for admin and user passwords
 Promise.all([
   generateHash('Admin@123'),
   generateHash('User@123')

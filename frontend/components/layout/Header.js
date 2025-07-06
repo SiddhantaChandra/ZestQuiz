@@ -14,7 +14,7 @@ export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Determine navigation context
+
   const isAdminRoute = pathname?.startsWith('/admin');
   const isQuizTaking = pathname?.includes('/quizzes/') && pathname?.includes('/take');
   const isAuthRoute = pathname?.startsWith('/auth');
@@ -23,10 +23,8 @@ export default function Header() {
     setMounted(true);
   }, []);
 
-  // Don't render navigation for quiz taking
   if (isQuizTaking) return null;
 
-  // Minimal navigation for auth pages
   if (isAuthRoute) {
     return (
       <header className="bg-card dark:bg-card-dark border-b border-border">
@@ -53,7 +51,6 @@ export default function Header() {
     <header className="bg-card dark:bg-card-dark border-b border-border transition-all duration-200">
       <nav className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
-          {/* Logo - adapts link based on context */}
           <Link 
             href={isAdminRoute ? '/admin/dashboard' : '/'} 
             className="flex items-center transition-transform hover:scale-105"
@@ -96,7 +93,7 @@ export default function Header() {
                 </Link> */}
               </div>
             ) : (
-              <div className="w-32 h-10" /> // Placeholder to prevent layout shift
+              <div className="w-32 h-10" />
             )}
           </div>
         </div>
@@ -120,7 +117,6 @@ export default function Header() {
   );
 }
 
-// Navigation Link Component
 function NavLink({ href, active, children }) {
   return (
     <Link

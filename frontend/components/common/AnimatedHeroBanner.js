@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-// Predefined positions for decorative elements
 const DECORATIVE_ELEMENTS = [
   { type: 'circle', top: 15, left: 25, size: 8, delay: 0, color: 'bg-blue-400/30' },
   { type: 'square', top: 45, left: 75, size: 12, delay: 0.2, color: 'bg-purple-400/30' },

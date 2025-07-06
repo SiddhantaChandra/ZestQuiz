@@ -1,6 +1,5 @@
 import toast from 'react-hot-toast';
 
-// Default toast configurations
 const defaultConfig = {
   duration: 3000,
   position: 'top-center',
@@ -14,7 +13,6 @@ const defaultConfig = {
   },
 };
 
-// Success toasts
 export const showSuccessToast = (message) => {
   toast.success(message, {
     ...defaultConfig,
@@ -28,7 +26,6 @@ export const showSuccessToast = (message) => {
   });
 };
 
-// Error toasts
 export const showErrorToast = (message) => {
   toast.error(message, {
     ...defaultConfig,
@@ -42,7 +39,6 @@ export const showErrorToast = (message) => {
   });
 };
 
-// Info toasts
 export const showInfoToast = (message) => {
   toast(message, {
     ...defaultConfig,
@@ -56,7 +52,6 @@ export const showInfoToast = (message) => {
   });
 };
 
-// Warning toasts
 export const showWarningToast = (message) => {
   toast(message, {
     ...defaultConfig,
@@ -70,7 +65,6 @@ export const showWarningToast = (message) => {
   });
 };
 
-// Authentication toasts
 export const showLoginSuccessToast = (username) => {
   showSuccessToast(`Welcome back, ${username}! 👋`);
 };
@@ -83,7 +77,6 @@ export const showAuthErrorToast = (error) => {
   showErrorToast(error || 'Authentication failed. Please try again.');
 };
 
-// Quiz management toasts
 export const showQuizCreatedToast = () => {
   showSuccessToast('Quiz created successfully! 🎉');
 };
@@ -104,17 +97,14 @@ export const showStatusUpdateToast = (status) => {
   showSuccessToast(`Quiz status updated to ${status.toLowerCase()}`);
 };
 
-// Auto-save toasts
 export const showAutoSaveToast = () => {
   showInfoToast('Changes auto-saved ✨');
 };
 
-// Session toasts
 export const showSessionWarningToast = () => {
   showWarningToast('Your session will expire soon. Please save your work.');
 };
-
-// Error handler wrapper
+  
 export const withToastErrorHandler = async (promise, errorMessage = 'Operation failed') => {
   try {
     const result = await promise;

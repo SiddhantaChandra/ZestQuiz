@@ -30,7 +30,6 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 
-// Generate proper UUID v4
 const generateUUID = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     const r = Math.random() * 16 | 0;
@@ -60,7 +59,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false);
   const [questionOrder, setQuestionOrder] = useState([]);
 
-  // DnD sensors with modified settings for smoother dragging
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: null
@@ -70,7 +68,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     })
   );
 
-  // Ensure all questions and options have IDs
   useEffect(() => {
     if (formData.questions.some(q => !q.id || q.options.some(o => !o.id))) {
       setFormData(prev => ({
@@ -87,13 +84,11 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     }
   }, [formData.questions]);
 
-  // Update question order when questions change
   useEffect(() => {
     const newOrder = formData.questions.map(q => q.id);
     setQuestionOrder(newOrder);
   }, [formData.questions]);
 
-  // Handle drag end for question reordering
   const handleDragEnd = (event) => {
     const { active, over } = event;
     
@@ -104,7 +99,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       const newOrder = arrayMove(questionOrder, oldIndex, newIndex);
       setQuestionOrder(newOrder);
       
-      // Update questions array with new order
       const reorderedQuestions = newOrder.map(id => 
         formData.questions.find(q => q.id === id)
       );
@@ -122,10 +116,8 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   };
 
   const handleToggleAi = (e) => {
-    // Prevent any form submission
     e?.preventDefault?.();
     
-    // Check if there's actual data before showing the warning
     const hasData = formData.title.trim() !== '' || 
                    formData.description.trim() !== '' || 
                    formData.tags.length > 0 || 
@@ -135,16 +127,13 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     if (isDirty && hasData) {
       setShowAiConfirmModal(true);
     } else {
-      // Only switch mode and reset if there's no data
       handleAiModeSwitch(e);
     }
   };
 
   const handleAiModeSwitch = (e) => {
-    // Prevent any form submission
     e?.preventDefault?.();
     
-    // Use setTimeout to ensure state updates happen in the correct order
     setTimeout(() => {
       setFormData({
         title: '',
@@ -160,9 +149,8 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   };
 
   const handleAiQuizGenerated = (aiQuizData) => {
-    // Transform AI response to match form data structure
     const transformedData = {
-      title: aiQuizData.title || `Quiz about ${aiQuizData.topic}`, // Use AI title with fallback
+      title: aiQuizData.title || `Quiz about ${aiQuizData.topic}`,
       description: aiQuizData.description || '',
       tags: aiQuizData.tags || [],
       status: 'DRAFT',
@@ -179,30 +167,23 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       }))
     };
 
-    // Use setTimeout to ensure state updates happen in the correct order
     setTimeout(() => {
-      // First switch to manual mode
     setIsAiMode(false);
       
-      // Then update the form data
       setFormData(transformedData);
       
-      // Mark as dirty but don't submit
-    setIsDirty(true);
+      setIsDirty(true);
       
-      // Show success message
       showSuccessToast('Quiz generated successfully! Review and save when ready.');
     }, 0);
   };
 
-  // Handle form field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setIsDirty(true);
   };
 
-  // Handle tag input
   const handleTagKeyPress = (e) => {
     if (e.key === 'Enter' && tagInput.trim()) {
       e.preventDefault();
@@ -225,7 +206,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     setIsDirty(true);
   };
 
-  // Handle question operations
   const addQuestion = useCallback(() => {
     const newQuestion = {
       id: generateUUID(),
@@ -234,12 +214,11 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       options: Array(4).fill(null).map((_, i) => ({
         id: generateUUID(),
         text: '',
-        isCorrect: i === 0, // First option is correct by default
+        isCorrect: i === 0,
         orderIndex: i
       }))
     };
 
-    // Ensure proper data structure when adding to formData
     setFormData(prev => ({
       ...prev,
       questions: [
@@ -264,7 +243,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
       questions: prev.questions.map(q => {
         if (q.id !== questionId) return q;
         
-        // If we're updating options, ensure proper structure
         if (updates.options) {
           return {
             ...q,
@@ -278,7 +256,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
           };
         }
         
-        // For other updates
         return { ...q, ...updates };
       })
     }));
@@ -302,63 +279,52 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     }
   };
 
-  // Handle drag start
   const handleDragStart = (event) => {
     const { active } = event;
     setActiveDragId(active.id);
-    // Prevent horizontal scrolling during drag
     document.body.style.overflowX = 'hidden';
   };
 
   const validateForm = () => {
-    // Validate title
     if (!formData.title.trim()) {
       showWarningToast('Please enter a quiz title');
       return false;
     }
 
-    // Validate description
     if (!formData.description.trim()) {
       showWarningToast('Please enter a quiz description');
       return false;
     }
 
-    // Validate tags
     if (formData.tags.length === 0) {
       showWarningToast('Please add at least one tag');
       return false;
     }
 
-    // Validate questions
     if (formData.questions.length === 0) {
       showWarningToast('Please add at least one question');
       return false;
     }
 
-    // Validate each question
     for (let i = 0; i < formData.questions.length; i++) {
       const question = formData.questions[i];
       
-      // Check question text
       if (!question.text.trim()) {
         showWarningToast(`Question ${i + 1} is missing text`);
         return false;
       }
 
-      // Check options
       if (question.options.length < 2) {
         showWarningToast(`Question ${i + 1} needs at least 2 options`);
         return false;
       }
 
-      // Check if each option has text
       const emptyOption = question.options.findIndex(opt => !opt.text.trim());
       if (emptyOption !== -1) {
         showWarningToast(`Question ${i + 1} has an empty option (Option ${emptyOption + 1})`);
         return false;
       }
 
-      // Check if correct answer is selected
       if (!question.options.some(opt => opt.isCorrect)) {
         showWarningToast(`Question ${i + 1} needs a correct answer selected`);
         return false;
@@ -369,16 +335,14 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
   };
 
   const handleSubmit = async (e) => {
-    e?.preventDefault(); // Make preventDefault optional since we might call this programmatically
+    e?.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
     try {
-      // Ensure questions are properly structured
       const cleanedQuestions = formData.questions.map((question, qIndex) => {
-        // Clean options
         const cleanedOptions = question.options.map((option, oIndex) => ({
           id: option.id,
           text: (option.text || '').trim(),
@@ -386,7 +350,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
           orderIndex: oIndex
         }));
 
-        // Ensure one correct answer
         const hasCorrect = cleanedOptions.some(opt => opt.isCorrect);
         if (!hasCorrect) {
           cleanedOptions[0].isCorrect = true;
@@ -429,9 +392,9 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     try {
     setIsGeneratingQuestion(true);
       const response = await api.post('/ai/generate-question', {
-        topic: formData.title, // Use title as the topic
+        topic: formData.title, 
         existingQuestions: formData.questions.map(q => ({
-          question: q.text, // Changed from text to question
+          question: q.text, 
           options: q.options.map(opt => ({
             text: opt.text,
             isCorrect: opt.isCorrect
@@ -439,7 +402,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         }))
       });
 
-      // Validate the response
       if (!response.data?.question?.question || !Array.isArray(response.data?.question?.options)) {
         throw new Error('Invalid question format received from AI');
       }
@@ -454,7 +416,7 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
 
       const newQuestion = {
         id: generateUUID(),
-        text: response.data.question.question, // Changed from text to question
+        text: response.data.question.question, 
         orderIndex: formData.questions.length,
         options: response.data.question.options.map((option, i) => ({
           id: generateUUID(),
@@ -480,7 +442,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     }
   };
 
-  // Add beforeunload event listener
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (isDirty) {
@@ -493,7 +454,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty]);
 
-  // Add question if none exist and not in AI mode
   useEffect(() => {
     if (!isAiMode && formData.questions && formData.questions.length === 0) {
       addQuestion();
@@ -508,7 +468,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         </div>
       )}
 
-      {/* Exit Confirmation Modal */}
       <Modal
         isOpen={showExitModal}
         onClose={() => setShowExitModal(false)}
@@ -519,7 +478,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
         isDestructive={true}
       />
 
-      {/* AI Mode Confirmation Modal */}
       <Modal
         isOpen={showAiConfirmModal}
         onClose={(e) => {
@@ -547,7 +505,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
           </div>
 
           <div className="grid gap-6">
-            {/* Title */}
           <div>
               <label htmlFor="title" className="block text-sm font-medium text-text dark:text-text-dark mb-1">
               Title
@@ -563,7 +520,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
             />
           </div>
 
-            {/* Description */}
           <div>
               <label htmlFor="description" className="block text-sm font-medium text-text dark:text-text-dark mb-1">
               Description
@@ -579,7 +535,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
             />
           </div>
 
-            {/* Tags */}
           <div>
               <label htmlFor="tags" className="block text-sm font-medium text-text dark:text-text-dark mb-1">
                 Tags
@@ -614,7 +569,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
               </div>
             </div>
 
-            {/* Status */}
             <div>
               <label htmlFor="status" className="block text-sm font-medium text-text dark:text-text-dark mb-1">
                 Status
@@ -632,7 +586,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
               </select>
           </div>
 
-            {/* Questions */}
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-text dark:text-text-dark">Questions</h2>
@@ -670,7 +623,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
                 </SortableContext>
               </DndContext>
                       
-              {/* Action Buttons Below Questions */}
               <div className="flex gap-2 mt-6">
                           <button
                             type="button"
@@ -691,7 +643,6 @@ export default function QuizForm({ quiz, onSubmit, isEditing = false }) {
                           </button>
           </div>
 
-              {/* Footer Save Button */}
               <div className="mt-8 pt-6 border-t border-border">
             <button
               type="submit"

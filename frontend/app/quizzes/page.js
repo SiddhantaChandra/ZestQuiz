@@ -31,14 +31,13 @@ export default function QuizListPage() {
 
   const handleStartQuiz = async (quizId) => {
     try {
-      // Check if user has already attempted this quiz
+
       const response = await api.get(`/quizzes/${quizId}/attempt-check`);
       if (response.data.hasAttempted) {
-        // Redirect to results page if already attempted
         router.push(`/quizzes/${quizId}/results`);
         return;
       }
-      // If not attempted, start new attempt
+
       router.push(`/quizzes/${quizId}/take`);
     } catch (error) {
       console.error('Failed to check quiz attempt:', error);
@@ -76,7 +75,6 @@ export default function QuizListPage() {
               <h2 className="text-xl font-semibold mb-2">{quiz.title}</h2>
               <p className="text-gray-600 mb-4 line-clamp-2">{quiz.description}</p>
               
-              {/* Tags */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {quiz.tags.map((tag) => (
                   <span
@@ -87,8 +85,7 @@ export default function QuizListPage() {
                   </span>
                 ))}
               </div>
-
-              {/* Quiz Status */}
+                  
               {quiz.userAttempt ? (
                 <div className="flex items-center justify-between">
                   <span className="text-green-600">

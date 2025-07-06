@@ -43,7 +43,6 @@ export class ChatService {
   }
 
   async createMessage(userId: string, attemptId: string, content: string, isUserMessage: boolean = true) {
-    // Validate attempt exists and belongs to user
     await this.validateAttempt(userId, attemptId);
 
     return this.prisma.chatMessage.create({
@@ -57,7 +56,6 @@ export class ChatService {
   }
 
   async getChatHistory(userId: string, attemptId: string) {
-    // Validate attempt exists and belongs to user
     await this.validateAttempt(userId, attemptId);
 
     return this.prisma.chatMessage.findMany({
@@ -72,16 +70,12 @@ export class ChatService {
   }
 
   async processUserMessage(userId: string, attemptId: string, message: string) {
-    // Get quiz attempt context and validate access
     const attempt = await this.validateAttempt(userId, attemptId);
 
-    // Save user message
     await this.createMessage(userId, attemptId, message);
 
-    // Ensure score is a number for the AI context
     const score = attempt.score ?? 0;
 
-    // Prepare context for AI
     const context = {
       quiz: attempt.quiz,
       userAnswers: attempt.answers,
@@ -91,10 +85,8 @@ export class ChatService {
         : null,
     };
 
-    // Get AI response using the existing AI service
     const aiResponse = await this.aiService.generateResponse(message, context);
 
-    // Save AI response
     return this.createMessage(userId, attemptId, aiResponse, false);
   }
 

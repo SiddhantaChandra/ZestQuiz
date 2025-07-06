@@ -25,10 +25,8 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, quizId: null });
   const itemsPerPage = 10;
 
-  // Get unique tags from all quizzes
   const allTags = [...new Set(quizzes.flatMap(quiz => quiz.tags || []))].sort();
 
-  // Filter quizzes based on search term, status and tags
   const filteredQuizzes = quizzes
     .filter(quiz => {
     const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -39,19 +37,16 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
     return matchesSearch && matchesStatus && matchesTags;
   });
 
-  // Calculate pagination
   const totalPages = Math.ceil(filteredQuizzes.length / itemsPerPage);
   const paginatedQuizzes = filteredQuizzes.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, selectedTags]);
 
-  // Handle status change
   const handleStatusChange = async (quizId, newStatus) => {
     setLoading(prev => ({ ...prev, [quizId]: true }));
     setError(null);
@@ -69,7 +64,6 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
       showStatusUpdateToast(newStatus);
     } catch (error) {
       setError(`Failed to update quiz status: ${error.message}`);
-      // Revert the select value
       const select = document.querySelector(`select[data-quiz-id="${quizId}"]`);
       if (select) {
         select.value = quizzes.find(q => q.id === quizId)?.status || 'DRAFT';
@@ -79,7 +73,6 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
     }
   };
 
-  // Handle quiz deletion
   const handleDelete = async (quizId) => {
     setLoading(prev => ({ ...prev, [quizId]: true }));
     setError(null);
@@ -105,7 +98,6 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
     }
   };
 
-  // Handle edit
   const handleEdit = (quizId) => {
     router.push(`/admin/quizzes/${quizId}/edit`);
   };
@@ -124,7 +116,6 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       <Modal
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, quizId: null })}
@@ -135,7 +126,6 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
         isDestructive={true}
       />
 
-      {/* Search and Filter */}
       <div className="mb-6 space-y-4">
         <div className="flex gap-4">
           <input
@@ -166,7 +156,6 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
           </select>
         </div>
 
-        {/* Selected Tags Display */}
         {selectedTags.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {selectedTags.map(tag => (
@@ -187,7 +176,6 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
         )}
       </div>
 
-      {/* Quiz List */}
       <div className="bg-card dark:bg-card-dark rounded-lg shadow-custom border border-border">
         <table className="min-w-full">
           <thead>
@@ -252,7 +240,7 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
           </tbody>
         </table>
 
-      {/* Pagination */}
+              
       {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 p-4 border-t border-border">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
