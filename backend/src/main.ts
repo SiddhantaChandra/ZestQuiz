@@ -1,5 +1,4 @@
 console.log('Current directory:', process.cwd());
-console.log('Files in dist:', require('fs').readdirSync('./dist').join(', '));
 
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
