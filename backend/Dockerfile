@@ -3,7 +3,6 @@ FROM node:20-alpine AS development
 
 WORKDIR /usr/src/app
 
-# Install specific npm version and typescript globally
 RUN npm install -g npm@11.3.0 typescript @nestjs/cli
 
 COPY package*.json ./
@@ -14,42 +13,23 @@ RUN npm install
 
 COPY . .
 
-# Debug and build
-RUN echo "Contents of directory before build:" && \
-    ls -la && \
-    echo "Running NestJS build..." && \
-    nest build && \
-    echo "Contents of dist after build:" && \
-    ls -la dist/ && \
-    echo "Checking for main.js..." && \
-    find dist/ -name "main.js" && \
-    echo "Build complete!"
+RUN nest build
 
 # Production stage
 FROM node:20-alpine AS production
 
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
+ENV NODE_ENV=production
 
 WORKDIR /usr/src/app
 
-# Install specific npm version
 RUN npm install -g npm@11.3.0
 
 COPY package*.json ./
 COPY prisma ./prisma/
-COPY tsconfig*.json ./
 
-RUN npm install --only=production
+RUN npm install --omit=dev
+RUN npx prisma generate
 
-# Copy the built dist
 COPY --from=development /usr/src/app/dist ./dist
 
-# Debug dist contents
-RUN echo "Contents of dist in production:" && \
-    ls -la dist/ && \
-    find dist/ -name "main.js" && \
-    echo "Setup complete!"
-
-# Run migrations and start the app
-CMD npx prisma migrate deploy && node dist/main.js
+CMD sh -c "npx prisma migrate deploy && node dist/main.js"

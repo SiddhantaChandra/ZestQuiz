@@ -1,0 +1,21 @@
+services:
+  api:
+    container_name: zestquiz-api
+    build:
+      context: .
+      target: production
+
+    restart: unless-stopped
+
+    env_file:
+      - .env.production
+
+    networks:
+      - backend-network
+
+    ports:
+      - "3001:3001"
+
+networks:
+  backend-network:
+    external: true
