@@ -49,6 +49,8 @@ export class QuizService {
           },
         },
       });
+    }, {
+      timeout: 60000,
     });
   }
 
@@ -219,6 +221,8 @@ export class QuizService {
             },
           },
         });
+      }, {
+        timeout: 60000,
       });
     } catch (error) {
       console.error('Quiz update error:', error);
@@ -494,6 +498,8 @@ export class QuizService {
         });
 
         return { score, correctAnswers, totalQuestions };
+      }, {
+        timeout: 60000,
       });
     } catch (error) {
       throw new Error('Failed to submit quiz');
