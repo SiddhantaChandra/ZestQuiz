@@ -1,41 +1,111 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { api } from '@/lib/api';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Modal from '@/components/common/Modal';
 import SearchableTags from './SearchableTags';
 import {
   showQuizDeletedToast,
-  showQuizErrorToast,
   showStatusUpdateToast,
   withToastErrorHandler
 } from '@/lib/toast';
 
-export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
+const QuizRow = memo(function QuizRow({ quiz, statusColors, onStatusChange, onEdit, onDeleteRequest }) {
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const handleStatusChange = async (e) => {
+    const newStatus = e.target.value;
+    setIsUpdatingStatus(true);
+
+    try {
+      await withToastErrorHandler(
+        api.patch(`/quizzes/${quiz.id}`, { status: newStatus }),
+        'Failed to update quiz status'
+      );
+      onStatusChange(quiz.id, newStatus);
+      showStatusUpdateToast(newStatus);
+    } catch (error) {
+      console.error('Failed to update quiz status:', error);
+      // The select value is controlled by quiz.status, so it reverts automatically
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  return (
+    <tr className="border-b border-border hover:bg-background/50 dark:hover:bg-background-dark/50 transition-colors">
+      <td className="px-6 py-4 text-text dark:text-text-dark">{quiz.title}</td>
+      <td className="px-6 py-4">
+        <select
+          className={`px-2 py-1 rounded ${statusColors[quiz.status]} border border-border`}
+          value={quiz.status}
+          onChange={handleStatusChange}
+          disabled={isUpdatingStatus}
+        >
+          <option value="DRAFT">Draft</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
+      </td>
+      <td className="px-6 py-4 text-text dark:text-text-dark">{quiz.questions?.length || 0}</td>
+      <td className="px-6 py-4">
+        <div className="flex flex-wrap gap-2">
+          {quiz.tags?.map(tag => (
+            <span
+              key={tag}
+              className="bg-background dark:bg-background-dark text-text dark:text-text-dark px-2 py-1 rounded-full text-xs border border-border capitalize"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex gap-2">
+          <button
+            onClick={() => onEdit(quiz.id)}
+            disabled={isUpdatingStatus}
+            className="bg-primary/10 hover:bg-primary/20 text-primary dark:text-primary-light px-3 py-1 rounded-md border border-border min-w-16 text-center transition-colors"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => onDeleteRequest(quiz.id)}
+            disabled={isUpdatingStatus}
+            className="bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 px-3 py-1 rounded-md border border-border min-w-16 text-center transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
+
+export default function QuizList({ quizzes: initialQuizzes }) {
   const router = useRouter();
   const [quizzes, setQuizzes] = useState(initialQuizzes);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedTags, setSelectedTags] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState({});
   const [error, setError] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, quizId: null });
+  const [deletingQuizId, setDeletingQuizId] = useState(null);
   const itemsPerPage = 10;
 
   const allTags = [...new Set(quizzes.flatMap(quiz => quiz.tags || []))].sort();
 
   const filteredQuizzes = quizzes
     .filter(quiz => {
-    const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         quiz.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || quiz.status === statusFilter;
-    const matchesTags = selectedTags.length === 0 || 
-                       (quiz.tags && selectedTags.every(tag => quiz.tags.includes(tag)));
-    return matchesSearch && matchesStatus && matchesTags;
-  });
+      const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           quiz.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'ALL' || quiz.status === statusFilter;
+      const matchesTags = selectedTags.length === 0 ||
+                         (quiz.tags && selectedTags.every(tag => quiz.tags.includes(tag)));
+      return matchesSearch && matchesStatus && matchesTags;
+    });
 
   const totalPages = Math.ceil(filteredQuizzes.length / itemsPerPage);
   const paginatedQuizzes = filteredQuizzes.slice(
@@ -47,34 +117,14 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, selectedTags]);
 
-  const handleStatusChange = async (quizId, newStatus) => {
-    setLoading(prev => ({ ...prev, [quizId]: true }));
-    setError(null);
-    
-    try {
-      await withToastErrorHandler(
-        api.patch(`/quizzes/${quizId}`, { status: newStatus }),
-        'Failed to update quiz status'
-      );
-      const updatedQuizzes = quizzes.map(quiz =>
-        quiz.id === quizId ? { ...quiz, status: newStatus } : quiz
-      );
-      setQuizzes(updatedQuizzes);
-      if (onUpdate) onUpdate();
-      showStatusUpdateToast(newStatus);
-    } catch (error) {
-      setError(`Failed to update quiz status: ${error.message}`);
-      const select = document.querySelector(`select[data-quiz-id="${quizId}"]`);
-      if (select) {
-        select.value = quizzes.find(q => q.id === quizId)?.status || 'DRAFT';
-      }
-    } finally {
-      setLoading(prev => ({ ...prev, [quizId]: false }));
-    }
+  const handleStatusChange = (quizId, newStatus) => {
+    setQuizzes(prev => prev.map(quiz =>
+      quiz.id === quizId ? { ...quiz, status: newStatus } : quiz
+    ));
   };
 
   const handleDelete = async (quizId) => {
-    setLoading(prev => ({ ...prev, [quizId]: true }));
+    setDeletingQuizId(quizId);
     setError(null);
 
     try {
@@ -82,19 +132,18 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
         api.delete(`/quizzes/${quizId}`),
         'Failed to delete quiz'
       );
-      const updatedQuizzes = quizzes.filter(quiz => quiz.id !== quizId);
-      setQuizzes(updatedQuizzes);
-      if (onUpdate) onUpdate();
+      setQuizzes(prev => prev.filter(quiz => quiz.id !== quizId));
       showQuizDeletedToast();
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message;
       setError(`Failed to delete quiz: ${errorMessage}. ${
-        error.response?.status === 404 
+        error.response?.status === 404
           ? 'The quiz may have already been deleted.'
           : 'Please try again or contact support if the problem persists.'
       }`);
     } finally {
-      setLoading(prev => ({ ...prev, [quizId]: false }));
+      setDeletingQuizId(null);
+      setDeleteModal({ isOpen: false, quizId: null });
     }
   };
 
@@ -105,7 +154,7 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
   const statusColors = {
     DRAFT: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200',
     ACTIVE: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200',
-    INACTIVE: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200',
+    INACTIVE: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
   };
 
   return (
@@ -189,76 +238,36 @@ export default function QuizList({ quizzes: initialQuizzes, onUpdate }) {
           </thead>
           <tbody>
             {paginatedQuizzes.map((quiz) => (
-              <tr key={quiz.id} className="border-b border-border hover:bg-background/50 dark:hover:bg-background-dark/50 transition-colors">
-                <td className="px-6 py-4 text-text dark:text-text-dark">{quiz.title}</td>
-                <td className="px-6 py-4">
-                  <select
-                    className={`px-2 py-1 rounded ${statusColors[quiz.status]} border border-border`}
-                    value={quiz.status}
-                    onChange={(e) => handleStatusChange(quiz.id, e.target.value)}
-                    disabled={loading[quiz.id]}
-                    data-quiz-id={quiz.id}
-                  >
-                    <option value="DRAFT">Draft</option>
-                    <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
-                  </select>
-                </td>
-                <td className="px-6 py-4 text-text dark:text-text-dark">{quiz.questions?.length || 0}</td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-2">
-                    {quiz.tags?.map(tag => (
-                      <span
-                        key={tag}
-                        className="bg-background dark:bg-background-dark text-text dark:text-text-dark px-2 py-1 rounded-full text-xs border border-border capitalize"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(quiz.id)}
-                      disabled={loading[quiz.id]}
-                      className="bg-primary/10 hover:bg-primary/20 text-primary dark:text-primary-light px-3 py-1 rounded-md border border-border min-w-16 text-center transition-colors"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => setDeleteModal({ isOpen: true, quizId: quiz.id })}
-                      disabled={loading[quiz.id]}
-                      className="bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 px-3 py-1 rounded-md border border-border min-w-16 text-center transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
+              <QuizRow
+                key={quiz.id}
+                quiz={quiz}
+                statusColors={statusColors}
+                onStatusChange={handleStatusChange}
+                onEdit={handleEdit}
+                onDeleteRequest={(quizId) => setDeleteModal({ isOpen: true, quizId })}
+              />
             ))}
           </tbody>
         </table>
 
-              
-      {totalPages > 1 && (
+        {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 p-4 border-t border-border">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
                 className={`px-3 py-1 rounded-md transition-colors ${
-                currentPage === page
-                  ? 'bg-primary text-white'
+                  currentPage === page
+                    ? 'bg-primary text-white'
                     : 'bg-background dark:bg-background-dark text-text dark:text-text-dark hover:bg-background-dark/50'
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-        </div>
-      )}
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
-} 
+}
