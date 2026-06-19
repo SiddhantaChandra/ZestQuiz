@@ -14,6 +14,7 @@ RUN npm install
 COPY . .
 
 RUN nest build
+RUN npx tsc -p tsconfig.seed.json
 
 # Production stage
 FROM node:20-alpine AS production
