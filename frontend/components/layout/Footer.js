@@ -16,15 +16,15 @@ export default function Footer() {
           </a>
           <span className="hidden md:inline-block mx-2">|</span>
           <a
-            href="https://www.sydcodes.dev"
+            href="https://www.siddhantachandra.com"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-600 dark:text-blue-400 hover:underline"
           >
-            www.sydcodes.dev
+            siddhantachandra.com
           </a>
         </div>
       </div>
     </footer>
   );
-} 
+}
