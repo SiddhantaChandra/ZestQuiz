@@ -37,37 +37,94 @@ export class AiService {
     this.apiEndpoint = 'https://api.deepseek.com/v1/chat/completions';
   }
 
+  private async postToDeepSeek<T = DeepSeekResponse>(body: unknown, timeout = 30000): Promise<T> {
+    const maxRetries = 3;
+    const baseDelayMs = 1000;
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const { data } = await axios.post<DeepSeekResponse>(
+          this.apiEndpoint,
+          body,
+          {
+            headers: {
+              Authorization: `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            timeout,
+          },
+        );
+        return data as T;
+      } catch (error) {
+        lastError = error;
+
+        const retryable = this.isAxiosError(error) && (
+          error.code === 'EAI_AGAIN' ||
+          error.code === 'ENOTFOUND' ||
+          error.code === 'ECONNRESET' ||
+          error.code === 'ETIMEDOUT' ||
+          error.code === 'ECONNABORTED' ||
+          (error.response?.status ?? 0) >= 500
+        );
+
+        if (retryable && attempt < maxRetries) {
+          const delay = baseDelayMs * 2 ** (attempt - 1);
+          this.logger.warn(
+            `DeepSeek API attempt ${attempt} failed (${error.code || error.message}), retrying in ${delay}ms...`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+
+        break;
+      }
+    }
+
+    throw lastError;
+  }
+
+  private isAxiosError(error: unknown): error is { code?: string; message: string; response?: { status?: number } } {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      (('response' in error) || ('code' in error) || ('config' in error))
+    );
+  }
+
+  private formatErrorMessage(error: unknown): string {
+    if (this.isAxiosError(error)) {
+      const status = error.response?.status ?? 'no response';
+      return `DeepSeek API error: ${error.code || error.message} (status: ${status})`;
+    }
+    if (error instanceof Error) {
+      return `Unexpected error: ${error.message}`;
+    }
+    return `Unexpected error: ${String(error)}`;
+  }
+
   async generateQuiz(topic: string, numQuestions: number): Promise<AIQuizResponse> {
     try {
       const prompt = this.generateQuizPrompt(topic, numQuestions);
-      const response = await axios.post<DeepSeekResponse>(
-        this.apiEndpoint,
-        {
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a quiz generation assistant. Generate clear, accurate multiple choice questions with descriptions and relevant tags. The first tag must be one of these categories: ${VALID_CATEGORIES.join(', ')}.`,
-            },
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          temperature: 0.7,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
+      const response = await this.postToDeepSeek({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a quiz generation assistant. Generate clear, accurate multiple choice questions with descriptions and relevant tags. The first tag must be one of these categories: ${VALID_CATEGORIES.join(', ')}.`,
           },
-        }
-      );
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+      });
 
-      const quizResponse = this.parseAiResponse(response.data.choices[0].message.content);
+      const quizResponse = this.parseAiResponse(response.choices[0].message.content);
       return this.validateQuizResponse(quizResponse, topic);
     } catch (error) {
-      this.logger.error('Error generating quiz:', error);
+      this.logger.error(this.formatErrorMessage(error));
       throw new HttpException(
         'Failed to generate quiz questions',
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -83,34 +140,25 @@ Correct answer: ${correctAnswer}
 User's answer: ${userAnswer}
 Provide a brief, clear explanation of why the user's answer is incorrect and why the correct answer is right.`;
 
-      const response = await axios.post<DeepSeekResponse>(
-        this.apiEndpoint,
-        {
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a helpful tutor. Provide clear, concise explanations for quiz answers.',
-            },
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          temperature: 0.5,
-          max_tokens: 150,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
+      const response = await this.postToDeepSeek({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful tutor. Provide clear, concise explanations for quiz answers.',
           },
-        }
-      );
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.5,
+        max_tokens: 150,
+      });
 
-      return response.data.choices[0].message.content.trim();
+      return response.choices[0].message.content.trim();
     } catch (error) {
-      this.logger.error('Error generating explanation:', error);
+      this.logger.error(this.formatErrorMessage(error));
       throw new HttpException(
         'Failed to generate explanation',
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -125,34 +173,25 @@ Provide a brief, clear explanation of why the user's answer is incorrect and why
 
     try {
       const prompt = this.generateSingleQuestionPrompt(topic, existingQuestions);
-      const response = await axios.post<DeepSeekResponse>(
-        this.apiEndpoint,
-        {
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a quiz question generator. Generate clear, accurate multiple choice questions.',
-            },
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          temperature: 0.7,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
+      const response = await this.postToDeepSeek({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a quiz question generator. Generate clear, accurate multiple choice questions.',
           },
-        }
-      );
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+      });
 
-      const questionResponse = this.parseSingleQuestionResponse(response.data.choices[0].message.content);
+      const questionResponse = this.parseSingleQuestionResponse(response.choices[0].message.content);
       return this.validateSingleQuestion(questionResponse);
     } catch (error) {
-      this.logger.error('Error generating single question:', error);
+      this.logger.error(this.formatErrorMessage(error));
       throw new HttpException(
         'Failed to generate question',
         HttpStatus.INTERNAL_SERVER_ERROR
@@ -187,25 +226,20 @@ Provide a brief, clear explanation of why the user's answer is incorrect and why
       prompt += `User question: ${message}\n`;
       prompt += `Please provide a helpful, encouraging response that explains the concept and helps the user understand ${question ? 'this question' : 'the quiz material'} better.`;
 
-      const response = await axios.post<DeepSeekResponse>(
-        this.apiEndpoint,
-        {
-          model: 'deepseek-chat',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 1000,
-          temperature: 0.7,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await this.postToDeepSeek({
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 1000,
+        temperature: 0.7,
+      });
 
-      return response.data.choices[0].message.content.trim();
+      return response.choices[0].message.content.trim();
     } catch (error) {
-      throw new Error('Failed to generate AI response');
+      this.logger.error(this.formatErrorMessage(error));
+      throw new HttpException(
+        'Failed to generate AI response',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -225,26 +259,21 @@ User message: ${message}
 
 Is this message relevant to the quiz content, asking about the questions, answers, or directly related concepts?`;
 
-      const response = await axios.post<DeepSeekResponse>(
-        this.apiEndpoint,
-        {
-          model: 'deepseek-chat',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 10,
-          temperature: 0.1,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await this.postToDeepSeek({
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 10,
+        temperature: 0.1,
+      });
 
-      const result = response.data.choices[0].message.content.trim().toLowerCase();
+      const result = response.choices[0].message.content.trim().toLowerCase();
       return result === 'true';
     } catch (error) {
-      throw new Error('Failed to check message relevance');
+      this.logger.error(this.formatErrorMessage(error));
+      throw new HttpException(
+        'Failed to check message relevance',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
