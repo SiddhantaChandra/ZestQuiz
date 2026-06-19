@@ -55,7 +55,7 @@ export default function QuizListPage() {
         </a>
       </div>
 
-      <QuizList quizzes={quizzes} onUpdate={fetchQuizzes} />
+      <QuizList quizzes={quizzes} />
     </div>
   );
 } 
